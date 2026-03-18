@@ -1,3 +1,4 @@
+@~/Desktop/second-brain/rules/brain-sync-rule.md
 # STACK — Repo Rules
 
 ## Bundle IDs

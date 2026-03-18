@@ -3,14 +3,23 @@ import SwiftUI
 @main
 struct STACKApp: App {
     init() {
-        UINavigationBar.appearance().largeTitleTextAttributes = [
-            .font: UIFont.systemFont(ofSize: 34, weight: .light),
-            .foregroundColor: UIColor(red: 244/255, green: 242/255, blue: 238/255, alpha: 1)
+        let lightFont34 = UIFont.systemFont(ofSize: 34, weight: .light)
+        let lightFont17 = UIFont.systemFont(ofSize: 17, weight: .light)
+        let primaryColor = UIColor(red: 244/255, green: 242/255, blue: 238/255, alpha: 1)
+
+        let appearance = UINavigationBarAppearance()
+        appearance.configureWithTransparentBackground()
+        appearance.largeTitleTextAttributes = [
+            .font: lightFont34,
+            .foregroundColor: primaryColor
         ]
-        UINavigationBar.appearance().titleTextAttributes = [
-            .font: UIFont.systemFont(ofSize: 17, weight: .light),
-            .foregroundColor: UIColor(red: 244/255, green: 242/255, blue: 238/255, alpha: 1)
+        appearance.titleTextAttributes = [
+            .font: lightFont17,
+            .foregroundColor: primaryColor
         ]
+        UINavigationBar.appearance().standardAppearance = appearance
+        UINavigationBar.appearance().scrollEdgeAppearance = appearance
+        UINavigationBar.appearance().compactAppearance = appearance
     }
 
     var body: some Scene {

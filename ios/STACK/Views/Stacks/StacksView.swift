@@ -7,6 +7,14 @@ struct StacksView: View {
     var body: some View {
         NavigationStack {
             ScrollView {
+                Text("Stacks")
+                    .font(.system(size: 34, weight: .light))
+                    .foregroundStyle(StackTheme.primaryText)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 28)
+                    .padding(.top, 16)
+                    .padding(.bottom, 8)
+
                 LazyVStack(spacing: 0) {
                     ForEach(Milestone.allDays, id: \.self) { days in
                         let earned = store.currentDays >= days
@@ -30,7 +38,7 @@ struct StacksView: View {
                 .padding(.vertical, 8)
             }
             .background(StackTheme.background)
-            .navigationTitle("Stacks")
+            .navigationTitle("")
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(item: $selectedMilestone) { days in

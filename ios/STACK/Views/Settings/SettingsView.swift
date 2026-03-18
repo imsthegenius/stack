@@ -9,6 +9,14 @@ struct SettingsView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
+                    Text("Settings")
+                        .font(.system(size: 34, weight: .light))
+                        .foregroundStyle(StackTheme.primaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 28)
+                        .padding(.top, 16)
+                        .padding(.bottom, 8)
+
                     sectionHeader("WIDGET")
 
                     Button {
@@ -65,7 +73,7 @@ struct SettingsView: View {
                 .padding(.top, 8)
             }
             .background(StackTheme.background)
-            .navigationTitle("Settings")
+            .navigationTitle("")
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .sheet(isPresented: $showWidgetInstructions) {

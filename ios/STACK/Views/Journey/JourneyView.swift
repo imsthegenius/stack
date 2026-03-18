@@ -8,6 +8,14 @@ struct JourneyView: View {
         NavigationStack {
             ScrollView {
                 VStack(spacing: 0) {
+                    Text("Journey")
+                        .font(.system(size: 34, weight: .light))
+                        .foregroundStyle(StackTheme.primaryText)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding(.horizontal, 28)
+                        .padding(.top, 16)
+                        .padding(.bottom, 12)
+
                     ForEach(store.sortedChapters) { chapter in
                         if chapter.isCurrentChapter {
                             currentChapterRow(chapter)
@@ -48,7 +56,7 @@ struct JourneyView: View {
                 .padding(.top, 8)
             }
             .background(StackTheme.background)
-            .navigationTitle("Journey")
+            .navigationTitle("")
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .confirmationDialog(
