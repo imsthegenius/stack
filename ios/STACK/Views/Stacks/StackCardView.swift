@@ -79,16 +79,14 @@ struct StackCardView: View {
     }
 
     private var stackCircle: some View {
-        Circle()
-            .fill(.ultraThinMaterial)
-            .overlay(
-                Circle().stroke(Color.white, lineWidth: 1.5)
-            )
-            .overlay(
-                Text(Milestone.shortLabel(for: milestoneDays))
-                    .font(.system(size: 54, weight: .thin))
-                    .foregroundStyle(Color.white)
-            )
+        ZStack {
+            Circle()
+                .stroke(Color(hex: "C8A96E"), lineWidth: 1.5)
+
+            Text(Milestone.shortLabel(for: milestoneDays))
+                .font(.system(size: 54, weight: .thin))
+                .foregroundStyle(Color(hex: "C8A96E"))
+        }
     }
 
     private func renderAndShare() {
@@ -102,6 +100,7 @@ struct StackCardView: View {
     }
 }
 
+// Clean export view — no app chrome, used only for ImageRenderer
 struct StackExportView: View {
     let milestoneDays: Int
     let store: StackStore
@@ -110,17 +109,15 @@ struct StackExportView: View {
         VStack(spacing: 0) {
             Spacer()
 
-            Circle()
-                .fill(Color(hex: "1C1B19"))
-                .overlay(
-                    Circle().stroke(Color.white, lineWidth: 1.5)
-                )
-                .overlay(
-                    Text(Milestone.shortLabel(for: milestoneDays))
-                        .font(.system(size: 54, weight: .thin))
-                        .foregroundStyle(Color.white)
-                )
-                .frame(width: 128, height: 128)
+            ZStack {
+                Circle()
+                    .stroke(Color(hex: "C8A96E"), lineWidth: 1.5)
+                    .frame(width: 128, height: 128)
+
+                Text(Milestone.shortLabel(for: milestoneDays))
+                    .font(.system(size: 54, weight: .thin))
+                    .foregroundStyle(Color(hex: "C8A96E"))
+            }
 
             Text((Milestone.label(for: milestoneDays) ?? "").uppercased())
                 .font(.system(size: 22, weight: .light))

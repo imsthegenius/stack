@@ -30,33 +30,40 @@ struct StacksView: View {
                 .padding(.vertical, 8)
             }
             .background(StackTheme.background)
-            .navigationTitle("Your Stacks")
+            .navigationTitle("Stacks")
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
-            .fullScreenCover(item: $selectedMilestone) { days in
+            .sheet(item: $selectedMilestone) { days in
                 StackCardView(store: store, milestoneDays: days)
             }
         }
     }
 
     private func earnedRow(days: Int) -> some View {
-        HStack(spacing: 12) {
-            Circle()
-                .fill(.ultraThinMaterial)
-                .overlay(
-                    Circle().stroke(Color.white, lineWidth: 1.5)
-                )
-                .overlay(
-                    Text(Milestone.shortLabel(for: days))
-                        .font(.system(size: 17, weight: .thin))
-                        .foregroundStyle(Color.white)
-                )
-                .frame(width: 40, height: 40)
+        HStack(spacing: 16) {
+            ZStack {
+                Circle()
+                    .stroke(Color(hex: "C8A96E"), lineWidth: 1.5)
+                    .frame(width: 40, height: 40)
+
+                Text(Milestone.shortLabel(for: days))
+                    .font(.system(size: 15, weight: .thin))
+                    .foregroundStyle(Color(hex: "C8A96E"))
+            }
+            .frame(width: 40, height: 40)
 
             VStack(alignment: .leading, spacing: 2) {
-                Text(Milestone.label(for: days) ?? "")
-                    .font(.system(size: 16, weight: .light))
-                    .foregroundStyle(StackTheme.primaryText)
+                HStack(spacing: 6) {
+                    Text(Milestone.label(for: days) ?? "")
+                        .font(.system(size: 16, weight: .light))
+                        .foregroundStyle(StackTheme.primaryText)
+
+                    if !store.receivedRelayMilestoneDays.contains(days) {
+                        Circle()
+                            .fill(Color(hex: "C8A96E"))
+                            .frame(width: 4, height: 4)
+                    }
+                }
 
                 if let info = store.earnedDate(for: days) {
                     Text("\(StackDateFormatter.string(from: info.date)) · Chapter \(info.chapter.chapterNumber)")
@@ -77,7 +84,7 @@ struct StacksView: View {
     }
 
     private func lockedRow(days: Int) -> some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 16) {
             Circle()
                 .stroke(StackTheme.ghost, lineWidth: 1.5)
                 .frame(width: 40, height: 40)

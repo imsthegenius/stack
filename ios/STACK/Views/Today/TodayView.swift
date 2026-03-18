@@ -30,6 +30,13 @@ struct TodayView: View {
 
                 counterBlock
 
+                if pledgedToday {
+                    Text("Stacked.")
+                        .font(.system(size: 13, weight: .light))
+                        .foregroundStyle(StackTheme.tertiaryText)
+                        .padding(.top, 8)
+                }
+
                 if store.chapters.count > 1 {
                     Text("\(store.totalDays) days total across \(store.chapters.count) chapters")
                         .font(.system(size: 12, weight: .light))
@@ -46,6 +53,9 @@ struct TodayView: View {
         }
         .onChange(of: store.hasPledgedToday) { _, newValue in
             pledgedToday = newValue
+        }
+        .fullScreenCover(isPresented: $showMilestoneMoment) {
+            MilestoneMomentView(store: store)
         }
     }
 
@@ -70,30 +80,23 @@ struct TodayView: View {
                     .foregroundStyle(StackTheme.secondaryText)
 
                 if store.isMilestoneDay, let label = store.currentMilestoneLabel {
-                    Button {
-                        if pledgedToday {
-                            showMilestoneMoment = true
-                        }
-                    } label: {
-                        Text(label.uppercased())
-                            .font(.system(size: 13, weight: .light))
-                            .tracking(1.5)
-                            .foregroundStyle(StackTheme.milestoneWhite)
-                            .padding(.top, 4)
-                    }
-                    .disabled(!pledgedToday)
+                    Text(label.uppercased())
+                        .font(.system(size: 13, weight: .light))
+                        .tracking(1.5)
+                        .foregroundStyle(StackTheme.milestoneWhite)
+                        .padding(.top, 4)
                 }
             }
         }
         .contentShape(Circle())
         .onTapGesture {
-            guard !pledgedToday else { return }
-            withAnimation(.easeInOut(duration: 0.5)) {
-                pledgedToday = true
+            if pledgedToday {
+                if store.isMilestoneDay { showMilestoneMoment = true }
+                return
             }
+            withAnimation(.easeInOut(duration: 0.5)) { pledgedToday = true }
             store.pledgeToday()
             UIImpactFeedbackGenerator(style: .light).impactOccurred()
-
             if store.isMilestoneDay {
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
                     showMilestoneMoment = true

@@ -50,7 +50,7 @@ struct PaywallView: View {
                     Task { await purchaseLifetime() }
                 } label: {
                     Text("Unlock · $4.99")
-                        .font(.system(size: 16, weight: .medium))
+                        .font(.system(size: 16, weight: .light))
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)

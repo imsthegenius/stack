@@ -145,7 +145,7 @@ struct OnboardingContainerView: View {
                 withAnimation(.smooth) { currentPage = 4 }
             } label: {
                 Text("Starting today")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: 15, weight: .light))
                     .foregroundStyle(StackTheme.background)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -162,7 +162,7 @@ struct OnboardingContainerView: View {
                     .foregroundStyle(StackTheme.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(.ultraThinMaterial)
+                    .background(Color(hex: "1C1B19"))
                     .clipShape(.rect(cornerRadius: 12))
             }
             .padding(.top, 16)
@@ -192,7 +192,7 @@ struct OnboardingContainerView: View {
             } label: {
                 let isToday = Calendar.current.isDateInToday(selectedDate)
                 Text(isToday ? "This is Day 1" : "Start from \(Self.formatDate(selectedDate))")
-                    .font(.system(size: 15, weight: .medium))
+                    .font(.system(size: 15, weight: .light))
                     .foregroundStyle(StackTheme.background)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -270,7 +270,7 @@ struct OnboardingContainerView: View {
                     commitHistory()
                 } label: {
                     Text("Start stacking")
-                        .font(.system(size: 15, weight: .medium))
+                        .font(.system(size: 15, weight: .light))
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
