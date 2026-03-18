@@ -1,0 +1,9 @@
+{
+  "apps": [
+    {
+      "name": "STACK",
+      "path": "ios",
+      "framework": "swift"
+    }
+  ]
+}

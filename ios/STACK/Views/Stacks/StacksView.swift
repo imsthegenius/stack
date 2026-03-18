@@ -1,0 +1,106 @@
+import SwiftUI
+
+struct StacksView: View {
+    let store: StackStore
+    @State private var selectedMilestone: Int?
+
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                LazyVStack(spacing: 0) {
+                    ForEach(Milestone.allDays, id: \.self) { days in
+                        let earned = store.currentDays >= days
+                        if earned {
+                            Button {
+                                selectedMilestone = days
+                            } label: {
+                                earnedRow(days: days)
+                            }
+                        } else {
+                            lockedRow(days: days)
+                        }
+
+                        if days != Milestone.allDays.last {
+                            StackTheme.separator
+                                .frame(height: 0.5)
+                                .padding(.leading, 80)
+                        }
+                    }
+                }
+                .padding(.vertical, 8)
+            }
+            .background(StackTheme.background)
+            .navigationTitle("Your Stacks")
+            .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
+            .toolbarColorScheme(.dark, for: .navigationBar)
+            .fullScreenCover(item: $selectedMilestone) { days in
+                StackCardView(store: store, milestoneDays: days)
+            }
+        }
+    }
+
+    private func earnedRow(days: Int) -> some View {
+        HStack(spacing: 12) {
+            Circle()
+                .fill(.ultraThinMaterial)
+                .overlay(
+                    Circle().stroke(Color.white, lineWidth: 1.5)
+                )
+                .overlay(
+                    Text(Milestone.shortLabel(for: days))
+                        .font(.system(size: 17, weight: .thin))
+                        .foregroundStyle(Color.white)
+                )
+                .frame(width: 40, height: 40)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(Milestone.label(for: days) ?? "")
+                    .font(.system(size: 16, weight: .light))
+                    .foregroundStyle(StackTheme.primaryText)
+
+                if let info = store.earnedDate(for: days) {
+                    Text("\(StackDateFormatter.string(from: info.date)) · Chapter \(info.chapter.chapterNumber)")
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundStyle(StackTheme.tertiaryText)
+                }
+            }
+
+            Spacer()
+
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12))
+                .foregroundStyle(StackTheme.tertiaryText)
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 16)
+        .contentShape(Rectangle())
+    }
+
+    private func lockedRow(days: Int) -> some View {
+        HStack(spacing: 12) {
+            Circle()
+                .stroke(StackTheme.ghost, lineWidth: 1.5)
+                .frame(width: 40, height: 40)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(Milestone.label(for: days) ?? "")
+                    .font(.system(size: 16, weight: .light))
+                    .foregroundStyle(StackTheme.tertiaryText)
+
+                let remaining = Milestone.daysUntil(from: store.currentDays, to: days)
+                Text("In \(remaining) days")
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundStyle(StackTheme.ghost)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal, 28)
+        .padding(.vertical, 16)
+        .allowsHitTesting(false)
+    }
+}
+
+extension Int: @retroactive Identifiable {
+    public var id: Int { self }
+}
