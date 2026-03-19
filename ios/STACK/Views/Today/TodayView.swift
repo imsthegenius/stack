@@ -10,6 +10,8 @@ struct TodayView: View {
     @State private var showLockedRelay: Bool = false
     @State private var showPaywallSheet: Bool = false
     @State private var relayTask: Task<Void, Never>? = nil
+    @State private var showReportConfirmation: Bool = false
+    @State private var inlineRelayReported: Bool = false
 
     // The relay point to pass to MilestoneMomentView (for non-milestone fullscreen days)
     private var fullscreenRelayPoint: RelayPoint? {
@@ -50,20 +52,31 @@ struct TodayView: View {
 
                 // Inline relay message (free days 1-6 or paid user on inline relay day)
                 if showInlineRelay, let message = inlineRelayMessage {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(message.text)
-                            .font(Font.custom("Georgia", size: 15))
-                            .foregroundStyle(StackTheme.secondaryText)
-                            .lineSpacing(5)
-                            .lineLimit(2)
-
-                        Text("— someone ahead of you")
-                            .font(.system(size: 11, weight: .light))
+                    if inlineRelayReported {
+                        Text("Reported. Thank you.")
+                            .font(.system(size: 13, weight: .light))
                             .foregroundStyle(StackTheme.tertiaryText)
+                            .padding(.top, 16)
+                            .transition(.opacity)
+                    } else {
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(message.text)
+                                .font(Font.custom("Georgia", size: 15))
+                                .foregroundStyle(StackTheme.secondaryText)
+                                .lineSpacing(5)
+                                .lineLimit(2)
+
+                            Text("— someone ahead of you")
+                                .font(.system(size: 11, weight: .light))
+                                .foregroundStyle(StackTheme.tertiaryText)
+                        }
+                        .padding(.horizontal, 28)
+                        .padding(.top, 16)
+                        .transition(.opacity.combined(with: .move(edge: .bottom)))
+                        .onLongPressGesture {
+                            showReportConfirmation = true
+                        }
                     }
-                    .padding(.horizontal, 28)
-                    .padding(.top, 16)
-                    .transition(.opacity.combined(with: .move(edge: .bottom)))
                 }
 
                 // Locked relay state for free users on paid relay days
@@ -119,6 +132,14 @@ struct TodayView: View {
         }
         .sheet(isPresented: $showPaywallSheet) {
             PaywallView(store: store)
+        }
+        .confirmationDialog("Report this message?", isPresented: $showReportConfirmation) {
+            Button("Report", role: .destructive) {
+                Task { await reportInlineRelay() }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This message will be flagged for review and hidden from your view.")
         }
     }
 
@@ -218,9 +239,9 @@ struct TodayView: View {
 
         guard canSee else { return }
 
-        // Fetch and display
+        // Fetch and display (skip blocked messages)
         let message = await SupabaseService.shared.fetchRelayMessage(targetDay: currentDays)
-        guard let message else { return }
+        guard let message, !store.blockedRelayMessageIDs.contains(message.id) else { return }
         inlineRelayMessage = message
         withAnimation(.easeInOut(duration: 0.4)) {
             showInlineRelay = true
@@ -231,5 +252,13 @@ struct TodayView: View {
             store.receivedRelayDays.append(currentDays)
             store.save()
         }
+    }
+
+    private func reportInlineRelay() async {
+        guard let message = inlineRelayMessage else { return }
+        try? await SupabaseService.shared.reportRelayMessage(id: message.id)
+        store.blockedRelayMessageIDs.append(message.id)
+        store.save()
+        withAnimation { inlineRelayReported = true }
     }
 }

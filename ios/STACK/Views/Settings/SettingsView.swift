@@ -91,6 +91,39 @@ struct SettingsView: View {
 
                     StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
 
+                    sectionHeader("LEGAL")
+                        .padding(.top, 24)
+
+                    Link(destination: URL(string: "https://imsthegenius.github.io/stack/privacy.html")!) {
+                        settingsRow(title: "Privacy Policy", trailing: {
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 10, weight: .light))
+                                .foregroundStyle(StackTheme.tertiaryText)
+                        })
+                    }
+
+                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+
+                    Link(destination: URL(string: "https://imsthegenius.github.io/stack/terms.html")!) {
+                        settingsRow(title: "Terms of Use", trailing: {
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 10, weight: .light))
+                                .foregroundStyle(StackTheme.tertiaryText)
+                        })
+                    }
+
+                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+
+                    Link(destination: URL(string: "mailto:hello@twohundred.co")!) {
+                        settingsRow(title: "Contact Support", trailing: {
+                            Image(systemName: "envelope")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundStyle(StackTheme.tertiaryText)
+                        })
+                    }
+
+                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+
                     sectionHeader("ABOUT")
                         .padding(.top, 24)
 

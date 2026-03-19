@@ -9,6 +9,8 @@ struct MilestoneMomentView: View {
     @State private var isLoading: Bool = true
     @State private var showWritePhase: Bool = false
     @State private var showPaywall: Bool = false
+    @State private var showReportConfirmation: Bool = false
+    @State private var reportedMessage: Bool = false
 
     private var targetDay: Int {
         relayPoint?.day ?? store.currentDays
@@ -130,23 +132,49 @@ struct MilestoneMomentView: View {
 
     private func paidMessageView(message: RelayMessage) -> some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text(message.text)
-                .font(Font.custom("Georgia", size: 19))
-                .foregroundStyle(StackTheme.primaryText)
-                .lineSpacing(9)
-                .frame(maxWidth: .infinity, alignment: .leading)
+            if reportedMessage {
+                Text("Reported. Thank you.")
+                    .font(.system(size: 15, weight: .light))
+                    .foregroundStyle(StackTheme.tertiaryText)
+            } else {
+                Text(message.text)
+                    .font(Font.custom("Georgia", size: 19))
+                    .foregroundStyle(StackTheme.primaryText)
+                    .lineSpacing(9)
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("Written by someone at this milestone before you.")
-                .font(.system(size: 12, weight: .light))
-                .foregroundStyle(StackTheme.tertiaryText)
+                HStack {
+                    Text("— someone ahead of you")
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundStyle(StackTheme.tertiaryText)
+
+                    Spacer()
+
+                    Button {
+                        showReportConfirmation = true
+                    } label: {
+                        Image(systemName: "flag")
+                            .font(.system(size: 11, weight: .light))
+                            .foregroundStyle(StackTheme.tertiaryText)
+                    }
+                }
                 .padding(.top, 12)
+            }
         }
         .padding(24)
         .background(StackTheme.separator)
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .padding(.horizontal, 28)
         .contentShape(Rectangle())
-        .onTapGesture { showWritePhase = true }
+        .onTapGesture { if !reportedMessage { showWritePhase = true } }
+        .confirmationDialog("Report this message?", isPresented: $showReportConfirmation) {
+            Button("Report", role: .destructive) {
+                Task { await reportMessage(message) }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("This message will be flagged for review and hidden from your view.")
+        }
     }
 
     private var emptyPoolView: some View {
@@ -218,11 +246,23 @@ struct MilestoneMomentView: View {
     private func loadRelay() async {
         isLoading = true
         // Always fetch — free tier shows truncated, paid shows full
-        relayMessage = await SupabaseService.shared.fetchRelayMessage(targetDay: targetDay)
+        if let msg = await SupabaseService.shared.fetchRelayMessage(targetDay: targetDay) {
+            // Skip blocked messages
+            if !store.blockedRelayMessageIDs.contains(msg.id) {
+                relayMessage = msg
+            }
+        }
         isLoading = false
         if !store.receivedRelayDays.contains(targetDay) {
             store.receivedRelayDays.append(targetDay)
             store.save()
         }
+    }
+
+    private func reportMessage(_ message: RelayMessage) async {
+        try? await SupabaseService.shared.reportRelayMessage(id: message.id)
+        store.blockedRelayMessageIDs.append(message.id)
+        store.save()
+        withAnimation { reportedMessage = true }
     }
 }

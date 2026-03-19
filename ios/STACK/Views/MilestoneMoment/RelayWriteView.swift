@@ -11,6 +11,7 @@ struct RelayWriteView: View {
     @State private var isSubmitting: Bool = false
     @State private var sentForward: Bool = false
     @State private var showError: Bool = false
+    @State private var showFilterError: Bool = false
 
     private let maxLength = 500
 
@@ -98,7 +99,13 @@ struct RelayWriteView: View {
                 )
                 .padding(.horizontal, 28)
 
-                if showError {
+                if showFilterError {
+                    Text("Your message couldn't be sent. Please revise it.")
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundStyle(StackTheme.tertiaryText)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 10)
+                } else if showError {
                     Text("Something went wrong. Try again.")
                         .font(.system(size: 12, weight: .light))
                         .foregroundStyle(StackTheme.tertiaryText)
@@ -123,9 +130,16 @@ struct RelayWriteView: View {
 
     private func submit() async {
         isSubmitting = true
+        showFilterError = false
         let trimmed = messageText.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             isSubmitting = false
+            return
+        }
+
+        guard ContentFilter.isAcceptable(trimmed) else {
+            isSubmitting = false
+            showFilterError = true
             return
         }
 

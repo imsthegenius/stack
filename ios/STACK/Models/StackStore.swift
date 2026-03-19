@@ -9,6 +9,7 @@ class StackStore {
     var lifetimePurchased: Bool = false
     var receivedRelayDays: [Int] = []
     var writtenRelayDays: [Int] = []
+    var blockedRelayMessageIDs: [String] = []
 
     // Backward compat — kept for migration only
     var receivedRelayMilestoneDays: [Int] {
@@ -134,6 +135,9 @@ class StackStore {
         if let writtenData = defaults.array(forKey: "written_relay_days") as? [Int] {
             writtenRelayDays = writtenData
         }
+        if let blockedData = defaults.array(forKey: "blocked_relay_message_ids") as? [String] {
+            blockedRelayMessageIDs = blockedData
+        }
     }
 
     func save() {
@@ -144,6 +148,7 @@ class StackStore {
         defaults.set(lifetimePurchased, forKey: "lifetime_purchased")
         defaults.set(receivedRelayDays, forKey: "received_relay_days")
         defaults.set(writtenRelayDays, forKey: "written_relay_days")
+        defaults.set(blockedRelayMessageIDs, forKey: "blocked_relay_message_ids")
         syncWidgetData()
     }
 
@@ -154,7 +159,6 @@ class StackStore {
         defaults.set(isMilestoneDay, forKey: "widget_is_milestone_today")
         defaults.set(hasPledgedToday, forKey: "widget_pledged_today")
         defaults.set(currentMilestoneLabel ?? "", forKey: "widget_milestone_label")
-        defaults.set(lifetimePurchased, forKey: "widget_lifetime_purchased")
         WidgetCenter.shared.reloadAllTimelines()
     }
 
