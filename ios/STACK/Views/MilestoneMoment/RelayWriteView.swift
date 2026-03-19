@@ -1,13 +1,16 @@
 import SwiftUI
 
 struct RelayWriteView: View {
-    let milestoneDays: Int
+    let targetDay: Int
+    let writerDay: Int
+    let writePrompt: String
+    let writePlaceholder: String
     let onDismiss: () -> Void
 
     @State private var messageText: String = ""
     @State private var isSubmitting: Bool = false
     @State private var sentForward: Bool = false
-    @Environment(\.dismiss) private var dismiss
+    @State private var showError: Bool = false
 
     private let maxLength = 500
 
@@ -16,15 +19,27 @@ struct RelayWriteView: View {
             StackTheme.background.ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
-                Text("Now write something for the next person who stands here.")
+                HStack {
+                    Spacer()
+                    Button { onDismiss() } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .light))
+                            .foregroundStyle(StackTheme.tertiaryText)
+                            .padding(12)
+                    }
+                    .padding(.trailing, 16)
+                }
+                .padding(.top, 8)
+
+                Text(writePrompt)
                     .font(.system(size: 16, weight: .light))
                     .foregroundStyle(StackTheme.secondaryText)
                     .padding(.horizontal, 28)
-                    .padding(.top, 48)
+                    .padding(.top, 12)
 
                 ZStack(alignment: .topLeading) {
                     if messageText.isEmpty {
-                        Text("What do you wish someone had told you?")
+                        Text(writePlaceholder)
                             .font(Font.custom("Georgia", size: 18))
                             .foregroundStyle(StackTheme.ghost)
                             .padding(.top, 8)
@@ -73,7 +88,7 @@ struct RelayWriteView: View {
                     .foregroundStyle(StackTheme.primaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(Color(hex: "1C1B19"))
+                    .background(StackTheme.separator)
                     .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
                 .disabled(
@@ -83,12 +98,21 @@ struct RelayWriteView: View {
                 )
                 .padding(.horizontal, 28)
 
+                if showError {
+                    Text("Something went wrong. Try again.")
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundStyle(StackTheme.tertiaryText)
+                        .frame(maxWidth: .infinity, alignment: .center)
+                        .padding(.top, 10)
+                }
+
                 Button {
                     onDismiss()
                 } label: {
                     Text("Later")
                         .font(.system(size: 13, weight: .light))
                         .foregroundStyle(StackTheme.tertiaryText)
+                        .padding(.vertical, 12)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 16)
@@ -106,15 +130,19 @@ struct RelayWriteView: View {
         }
 
         do {
-            try await SupabaseService.shared.submitRelayMessage(text: trimmed, milestone: milestoneDays)
+            try await SupabaseService.shared.submitRelayMessage(text: trimmed, targetDay: targetDay, writerDay: writerDay)
             withAnimation(.easeInOut(duration: 0.4)) {
                 sentForward = true
             }
             try? await Task.sleep(nanoseconds: 2_000_000_000)
             onDismiss()
         } catch {
-            // Silent failure — don't show error to user
             isSubmitting = false
+            showError = true
+            Task {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                showError = false
+            }
         }
     }
 }

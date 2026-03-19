@@ -1,70 +1,38 @@
--- STACK — relay_messages v2 schema
--- Run in Supabase SQL Editor: https://app.supabase.com → SQL Editor
--- Project: https://wfckqpnxnzzwbgbthtsb.supabase.co
---
--- For fresh installs. For migration from v1, use migrate-v1-to-v2.sql instead.
+-- STACK — migrate relay_messages from v1 to v2
+-- Run in Supabase SQL Editor AFTER backing up existing data.
+-- This preserves the milestone_days column (deprecated) so old app versions don't crash.
 
-CREATE TABLE relay_messages (
-  id              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+-- Step 1: Add new columns
+ALTER TABLE relay_messages ADD COLUMN IF NOT EXISTS target_day INTEGER;
+ALTER TABLE relay_messages ADD COLUMN IF NOT EXISTS writer_day INTEGER;
+ALTER TABLE relay_messages ADD COLUMN IF NOT EXISTS is_seed BOOLEAN DEFAULT false;
+ALTER TABLE relay_messages ADD COLUMN IF NOT EXISTS flagged_at TIMESTAMPTZ;
 
-  -- WHO this message is FOR (the reader)
-  target_day      INTEGER NOT NULL,
+-- Step 2: Migrate existing data (all existing messages are seeds)
+UPDATE relay_messages SET
+  target_day = milestone_days,
+  writer_day = milestone_days,
+  is_seed = true
+WHERE target_day IS NULL;
 
-  -- WHO wrote this message
-  writer_day      INTEGER NOT NULL,
+-- Step 3: Make columns NOT NULL after migration
+ALTER TABLE relay_messages ALTER COLUMN target_day SET NOT NULL;
+ALTER TABLE relay_messages ALTER COLUMN writer_day SET NOT NULL;
 
-  -- The message
-  text            TEXT NOT NULL,
+-- Step 4: Add new indexes
+CREATE INDEX IF NOT EXISTS idx_relay_target_active ON relay_messages(target_day, is_active);
+CREATE INDEX IF NOT EXISTS idx_relay_writer ON relay_messages(writer_day);
+CREATE INDEX IF NOT EXISTS idx_relay_flagged ON relay_messages(is_active, report_count);
 
-  -- Metadata
-  is_seed         BOOLEAN DEFAULT false,
-  created_at      TIMESTAMPTZ DEFAULT now(),
-  is_active       BOOLEAN DEFAULT true,
-  report_count    INTEGER DEFAULT 0,
+-- Step 5: Add constraints (only on new rows — existing data may not satisfy writer > target for seeds)
+-- These are enforced at the application level for now.
 
-  -- Content moderation
-  flagged_at      TIMESTAMPTZ,
+-- Step 6: Keep milestone_days column alive (deprecated, DO NOT DROP)
+-- Old app versions query milestone_days=eq.X — dropping it would crash them.
+-- Drop in v1.2+ after force-update.
 
-  -- Constraints
-  CONSTRAINT text_length CHECK (char_length(text) BETWEEN 10 AND 500),
-  CONSTRAINT valid_target CHECK (target_day > 0),
-  CONSTRAINT valid_writer CHECK (writer_day > target_day OR is_seed = true)
-);
-
--- Primary query: fetch messages for a reader at a specific day
-CREATE INDEX idx_relay_target_active ON relay_messages(target_day, is_active);
-
--- Analytics: see what writers at each stage are producing
-CREATE INDEX idx_relay_writer ON relay_messages(writer_day);
-
--- Moderation: find flagged messages
-CREATE INDEX idx_relay_flagged ON relay_messages(is_active, report_count);
-
--- RLS
-ALTER TABLE relay_messages ENABLE ROW LEVEL SECURITY;
-
--- Anyone can read active messages
-CREATE POLICY "anon_read" ON relay_messages
-  FOR SELECT USING (is_active = true);
-
--- Anyone can submit a relay message
-CREATE POLICY "anon_insert" ON relay_messages
-  FOR INSERT WITH CHECK (true);
-
--- Report function: auto-deactivates at 3 reports
-CREATE OR REPLACE FUNCTION report_relay_message(message_id UUID)
-RETURNS void AS $$
-BEGIN
-  UPDATE relay_messages
-  SET report_count = report_count + 1,
-      is_active = CASE WHEN report_count + 1 >= 3 THEN false ELSE is_active END,
-      flagged_at = CASE WHEN report_count + 1 >= 3 THEN now() ELSE flagged_at END
-  WHERE id = message_id;
-END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Relay points reference table
-CREATE TABLE relay_points (
+-- Step 7: Create relay_points config table
+CREATE TABLE IF NOT EXISTS relay_points (
   target_day          INTEGER PRIMARY KEY,
   writer_day          INTEGER NOT NULL,
   label               TEXT NOT NULL,
@@ -75,6 +43,7 @@ CREATE TABLE relay_points (
   write_placeholder   TEXT NOT NULL
 );
 
+-- Insert relay points (upsert to be idempotent)
 INSERT INTO relay_points VALUES
 (1,    7,    'Day 1',          'inline',     true,  true,  'Someone is on Day 1 right now. The very first day. What do you remember about yours?', 'What was Day 1 like?'),
 (2,    7,    'Day 2',          'inline',     true,  false, 'Someone just finished Day 2. Still very early. What was that like for you?', 'What do you remember about the second day?'),
@@ -100,4 +69,20 @@ INSERT INTO relay_points VALUES
 (1000, 1825, 'The Comma Club', 'fullscreen', false, true,  'Write something for someone at 1000 days. The Comma Club.', 'What would you tell someone at 1000 days?'),
 (1825, 3650, 'Five Years',     'fullscreen', false, true,  'Someone just reached five years. Write something for them.', 'What would you tell someone at five years?'),
 (3650, 7300, 'Ten Years',      'fullscreen', false, true,  'Write something for someone at ten years.', 'What would you tell someone at ten years?'),
-(7300, 7300, 'Twenty Years',   'fullscreen', false, true,  'You''re one of the longest-standing people in STACK. Write something for someone behind you.', 'What would you say to someone on this path?');
+(7300, 7300, 'Twenty Years',   'fullscreen', false, true,  'You''re one of the longest-standing people in STACK. Write something for someone behind you.', 'What would you say to someone on this path?')
+ON CONFLICT (target_day) DO NOTHING;
+
+-- Step 8: Update RLS (policies are idempotent — drop and recreate if they exist)
+-- The existing anon_read and anon_insert policies still work for the new columns.
+
+-- Step 9: Update report function to include flagged_at
+CREATE OR REPLACE FUNCTION report_relay_message(message_id UUID)
+RETURNS void AS $$
+BEGIN
+  UPDATE relay_messages
+  SET report_count = report_count + 1,
+      is_active = CASE WHEN report_count + 1 >= 3 THEN false ELSE is_active END,
+      flagged_at = CASE WHEN report_count + 1 >= 3 THEN now() ELSE flagged_at END
+  WHERE id = message_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

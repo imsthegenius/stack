@@ -6,6 +6,7 @@ struct StackCardView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var showShareSheet: Bool = false
     @State private var shareImage: UIImage?
+    @State private var showRelay: Bool = false
 
     private var milestoneLabel: String {
         Milestone.label(for: milestoneDays) ?? ""
@@ -57,16 +58,33 @@ struct StackCardView: View {
 
                 Spacer()
 
-                Button {
-                    renderAndShare()
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "square.and.arrow.up")
-                            .font(.system(size: 16))
-                        Text("Share")
-                            .font(.system(size: 14, weight: .light))
+                VStack(spacing: 16) {
+                    // Read the relay — opens MilestoneMomentView for this milestone
+                    if RelayPoint.relayPoint(for: milestoneDays) != nil {
+                        Button {
+                            showRelay = true
+                        } label: {
+                            HStack(spacing: 6) {
+                                Image(systemName: "envelope")
+                                    .font(.system(size: 14, weight: .light))
+                                Text("Read the relay")
+                                    .font(.system(size: 14, weight: .light))
+                            }
+                            .foregroundStyle(StackTheme.secondaryText)
+                        }
                     }
-                    .foregroundStyle(StackTheme.secondaryText)
+
+                    Button {
+                        renderAndShare()
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "square.and.arrow.up")
+                                .font(.system(size: 16, weight: .light))
+                            Text("Share")
+                                .font(.system(size: 14, weight: .light))
+                        }
+                        .foregroundStyle(StackTheme.secondaryText)
+                    }
                 }
                 .padding(.bottom, 32)
             }
@@ -76,16 +94,19 @@ struct StackCardView: View {
                 ShareSheet(items: [image, "\(milestoneLabel). One at a time. — STACK"])
             }
         }
+        .fullScreenCover(isPresented: $showRelay) {
+            MilestoneMomentView(store: store, relayPoint: RelayPoint.relayPoint(for: milestoneDays))
+        }
     }
 
     private var stackCircle: some View {
         ZStack {
             Circle()
-                .stroke(Color(hex: "C8A96E"), lineWidth: 1.5)
+                .stroke(StackTheme.primaryText, lineWidth: 1.5)
 
             Text(Milestone.shortLabel(for: milestoneDays))
-                .font(.system(size: 54, weight: .thin))
-                .foregroundStyle(Color(hex: "C8A96E"))
+                .font(.system(size: 54, weight: .light))
+                .foregroundStyle(StackTheme.primaryText)
         }
     }
 
@@ -111,12 +132,12 @@ struct StackExportView: View {
 
             ZStack {
                 Circle()
-                    .stroke(Color(hex: "C8A96E"), lineWidth: 1.5)
+                    .stroke(Color(hex: "F4F2EE"), lineWidth: 1.5)
                     .frame(width: 128, height: 128)
 
                 Text(Milestone.shortLabel(for: milestoneDays))
-                    .font(.system(size: 54, weight: .thin))
-                    .foregroundStyle(Color(hex: "C8A96E"))
+                    .font(.system(size: 54, weight: .light))
+                    .foregroundStyle(Color(hex: "F4F2EE"))
             }
 
             Text((Milestone.label(for: milestoneDays) ?? "").uppercased())

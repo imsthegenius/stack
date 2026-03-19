@@ -1,8 +1,12 @@
 import SwiftUI
+import RevenueCat
 
 @main
 struct STACKApp: App {
     init() {
+        Purchases.logLevel = .error
+        Purchases.configure(withAPIKey: "test_HUKGKJUpyCSWrvkxSdPOVUrKSyy")
+
         let lightFont34 = UIFont.systemFont(ofSize: 34, weight: .light)
         let lightFont17 = UIFont.systemFont(ofSize: 17, weight: .light)
         let primaryColor = UIColor(red: 244/255, green: 242/255, blue: 238/255, alpha: 1)

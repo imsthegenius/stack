@@ -43,9 +43,9 @@ The following files were created on disk but must be added to the Xcode project:
 - Make sure "Add to targets: STACK" is checked for each
 
 ### 2. Apple Developer Account
-- Register bundle ID: `com.stack.app`
-- Register widget bundle ID: `com.stack.app.widget`
-- Enable **App Groups** capability on both targets → add `group.com.stack.shared`
+- Register bundle ID: `com.twohundred.stack`
+- Register widget bundle ID: `com.twohundred.stack.widget`
+- Enable **App Groups** capability on both targets → add `group.com.twohundred.stack`
 - Create development provisioning profiles for both targets
 - In Xcode: Signing & Capabilities → + Capability → App Groups
 
@@ -60,7 +60,7 @@ The following files were created on disk but must be added to the Xcode project:
 ### 4. RevenueCat Integration (optional — can ship with StoreKit first)
 PaywallView already works with native StoreKit. To switch to RevenueCat:
 - Create RevenueCat project at app.revenuecat.com
-- Add product: `com.stack.app.lifetime` ($4.99 one-time)
+- Add product: `com.twohundred.stack.lifetime` ($6.99 one-time)
 - In Xcode: File → Add Package → `https://github.com/RevenueCat/purchases-ios-spm`
 - In `STACKApp.init()`: `Purchases.configure(withAPIKey: "YOUR_KEY")`
 - In `PaywallView.swift`: replace `purchaseLifetime()` body with RevenueCat purchase call

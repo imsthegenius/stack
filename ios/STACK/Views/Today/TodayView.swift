@@ -5,6 +5,17 @@ struct TodayView: View {
     var switchToJourneyTab: (() -> Void)?
     @State private var pledgedToday: Bool = false
     @State private var showMilestoneMoment: Bool = false
+    @State private var inlineRelayMessage: RelayMessage? = nil
+    @State private var showInlineRelay: Bool = false
+    @State private var showLockedRelay: Bool = false
+    @State private var showPaywallSheet: Bool = false
+    @State private var relayTask: Task<Void, Never>? = nil
+
+    // The relay point to pass to MilestoneMomentView (for non-milestone fullscreen days)
+    private var fullscreenRelayPoint: RelayPoint? {
+        guard store.isFullscreenRelayDay else { return nil }
+        return store.currentRelayPoint
+    }
 
     var body: some View {
         ZStack {
@@ -37,6 +48,55 @@ struct TodayView: View {
                         .padding(.top, 8)
                 }
 
+                // Inline relay message (free days 1-6 or paid user on inline relay day)
+                if showInlineRelay, let message = inlineRelayMessage {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text(message.text)
+                            .font(Font.custom("Georgia", size: 15))
+                            .foregroundStyle(StackTheme.secondaryText)
+                            .lineSpacing(5)
+                            .lineLimit(2)
+
+                        Text("— someone ahead of you")
+                            .font(.system(size: 11, weight: .light))
+                            .foregroundStyle(StackTheme.tertiaryText)
+                    }
+                    .padding(.horizontal, 28)
+                    .padding(.top, 16)
+                    .transition(.opacity.combined(with: .move(edge: .bottom)))
+                }
+
+                // Locked relay state for free users on paid relay days
+                if showLockedRelay {
+                    VStack(spacing: 8) {
+                        Text("A message is waiting.")
+                            .font(.system(size: 13, weight: .light))
+                            .foregroundStyle(StackTheme.tertiaryText)
+
+                        Button {
+                            showPaywallSheet = true
+                        } label: {
+                            HStack(spacing: 4) {
+                                Image(systemName: "lock.fill")
+                                    .font(.system(size: 10, weight: .light))
+                                Text("Unlock STACK")
+                                    .font(.system(size: 13, weight: .light))
+                            }
+                            .foregroundStyle(StackTheme.secondaryText)
+                        }
+                    }
+                    .padding(.top, 16)
+                    .transition(.opacity)
+                }
+
+                // Countdown to next relay (non-relay days only)
+                if pledgedToday && !store.isRelayDay, let daysLeft = store.daysUntilNextRelay, daysLeft <= 7 {
+                    Text("\(daysLeft) day\(daysLeft == 1 ? "" : "s") until next relay")
+                        .font(.system(size: 12, weight: .light))
+                        .foregroundStyle(StackTheme.tertiaryText)
+                        .padding(.top, 12)
+                }
+
                 if store.chapters.count > 1 {
                     Text("\(store.totalDays) days total across \(store.chapters.count) chapters")
                         .font(.system(size: 12, weight: .light))
@@ -55,53 +115,121 @@ struct TodayView: View {
             pledgedToday = newValue
         }
         .fullScreenCover(isPresented: $showMilestoneMoment) {
-            MilestoneMomentView(store: store)
+            MilestoneMomentView(store: store, relayPoint: fullscreenRelayPoint)
+        }
+        .sheet(isPresented: $showPaywallSheet) {
+            PaywallView(store: store)
         }
     }
 
     private var counterBlock: some View {
-        ZStack {
-            Circle()
-                .trim(from: 0, to: pledgedToday ? 1.0 : 0.0)
-                .stroke(Color(hex: "F4F2EE"), style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
-                .rotationEffect(.degrees(-90))
-                .frame(width: 200, height: 200)
-                .animation(.easeInOut(duration: 0.5), value: pledgedToday)
+        VStack(spacing: 0) {
+            ZStack {
+                Circle()
+                    .stroke(StackTheme.ghost, style: StrokeStyle(lineWidth: 1, lineCap: .round))
+                    .frame(width: 200, height: 200)
 
-            VStack(spacing: 4) {
+                Circle()
+                    .trim(from: 0, to: pledgedToday ? 1.0 : 0.0)
+                    .stroke(StackTheme.primaryText, style: StrokeStyle(lineWidth: 1, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 200, height: 200)
+                    .animation(.easeInOut(duration: 0.6), value: pledgedToday)
+
                 Text("\(store.currentDays)")
                     .font(.system(size: 88, weight: .thin))
                     .foregroundStyle(store.isMilestoneDay ? StackTheme.milestoneWhite : StackTheme.primaryText)
                     .contentTransition(.numericText())
+            }
+            .frame(width: 200, height: 200)
+            .contentShape(Circle())
+            .onTapGesture {
+                if pledgedToday {
+                    // Re-tap: open MilestoneMomentView on fullscreen relay days
+                    if store.isFullscreenRelayDay || store.isMilestoneDay {
+                        showMilestoneMoment = true
+                    }
+                    return
+                }
 
+                // Pledge
+                withAnimation(.easeInOut(duration: 0.6)) { pledgedToday = true }
+                store.pledgeToday()
+                UIImpactFeedbackGenerator(style: .light).impactOccurred()
+
+                // Trigger fullscreen relay (covers milestone days + fullscreen relay days)
+                if store.isFullscreenRelayDay {
+                    relayTask = Task {
+                        try? await Task.sleep(nanoseconds: 700_000_000)
+                        guard !Task.isCancelled else { return }
+                        showMilestoneMoment = true
+                    }
+                }
+
+                // Trigger inline relay
+                if store.isRelayDay && !store.isFullscreenRelayDay {
+                    relayTask = Task {
+                        try? await Task.sleep(nanoseconds: 1_500_000_000)
+                        guard !Task.isCancelled else { return }
+                        await showInlineRelayMessage()
+                    }
+                }
+            }
+
+            VStack(spacing: 6) {
                 Text("DAYS")
-                    .font(.system(size: 13, weight: .light))
-                    .tracking(2)
-                    .foregroundStyle(StackTheme.secondaryText)
+                    .font(.system(size: 11, weight: .light))
+                    .tracking(1.5)
+                    .foregroundStyle(StackTheme.tertiaryText)
 
-                if store.isMilestoneDay, let label = store.currentMilestoneLabel {
-                    Text(label.uppercased())
-                        .font(.system(size: 13, weight: .light))
-                        .tracking(1.5)
+                if let relayPoint = store.currentRelayPoint, relayPoint.isMilestone {
+                    Text(relayPoint.label.uppercased())
+                        .font(.system(size: 11, weight: .light))
+                        .tracking(3)
                         .foregroundStyle(StackTheme.milestoneWhite)
-                        .padding(.top, 4)
+                } else if store.isMilestoneDay, let label = store.currentMilestoneLabel {
+                    Text(label.uppercased())
+                        .font(.system(size: 11, weight: .light))
+                        .tracking(3)
+                        .foregroundStyle(StackTheme.milestoneWhite)
                 }
             }
+            .padding(.top, 28)
         }
-        .contentShape(Circle())
-        .onTapGesture {
-            if pledgedToday {
-                if store.isMilestoneDay { showMilestoneMoment = true }
-                return
+    }
+
+    private func showInlineRelayMessage() async {
+        let currentDays = store.currentDays
+        guard let relayPoint = RelayPoint.relayPoint(for: currentDays) else { return }
+
+        // Determine if user can see this message
+        let canSee: Bool
+        if relayPoint.isFree {
+            canSee = true
+        } else if store.lifetimePurchased {
+            canSee = true
+        } else {
+            // Free user on paid inline relay day — show locked state
+            withAnimation(.easeInOut(duration: 0.4)) {
+                showLockedRelay = true
             }
-            withAnimation(.easeInOut(duration: 0.5)) { pledgedToday = true }
-            store.pledgeToday()
-            UIImpactFeedbackGenerator(style: .light).impactOccurred()
-            if store.isMilestoneDay {
-                DispatchQueue.main.asyncAfter(deadline: .now() + 0.6) {
-                    showMilestoneMoment = true
-                }
-            }
+            return
+        }
+
+        guard canSee else { return }
+
+        // Fetch and display
+        let message = await SupabaseService.shared.fetchRelayMessage(targetDay: currentDays)
+        guard let message else { return }
+        inlineRelayMessage = message
+        withAnimation(.easeInOut(duration: 0.4)) {
+            showInlineRelay = true
+        }
+
+        // Mark as received
+        if !store.receivedRelayDays.contains(currentDays) {
+            store.receivedRelayDays.append(currentDays)
+            store.save()
         }
     }
 }

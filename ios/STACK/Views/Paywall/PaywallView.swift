@@ -1,128 +1,171 @@
 import SwiftUI
-import StoreKit
+import RevenueCat
 
 struct PaywallView: View {
     let store: StackStore
     @Environment(\.dismiss) private var dismiss
+
+    @State private var offering: Offering?
     @State private var isPurchasing: Bool = false
+    @State private var isRestoring: Bool = false
+    @State private var errorMessage: String?
+
+    private var priceString: String {
+        offering?.lifetime?.storeProduct.localizedPriceString ?? ""
+    }
 
     var body: some View {
         ZStack {
             StackTheme.background.ignoresSafeArea()
 
-            VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
                 HStack {
                     Spacer()
-                    Button("Not now") { dismiss() }
-                        .font(.system(size: 16, weight: .light))
-                        .foregroundStyle(StackTheme.secondaryText)
-                }
-                .padding(.horizontal, 28)
-                .padding(.top, 16)
-
-                HStack(spacing: 48) {
-                    ForEach(0..<3, id: \.self) { _ in
-                        Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
-                            .frame(width: 48, height: 48)
+                    Button {
+                        dismiss()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 16, weight: .light))
+                            .foregroundStyle(StackTheme.tertiaryText)
+                            .padding(12)
                     }
+                    .padding(.trailing, 16)
                 }
-                .padding(.top, 48)
-
-                Text("Everything you've earned.")
-                    .font(.system(size: 34, weight: .thin))
-                    .foregroundStyle(StackTheme.primaryText)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 40)
-                    .padding(.horizontal, 28)
-
-                VStack(spacing: 12) {
-                    paywallFeature("Every Stack. Yours to keep.")
-                    paywallFeature("The Relay — hear from those who've been here.")
-                    paywallFeature("Lock screen widget. Your count, always.")
-                }
-                .padding(.top, 28)
+                .padding(.top, 8)
 
                 Spacer()
 
-                Button {
-                    // TODO: StoreKit purchase (com.stack.app.lifetime)
-                    Task { await purchaseLifetime() }
-                } label: {
-                    Text("Unlock · $4.99")
-                        .font(.system(size: 16, weight: .light))
+                VStack(alignment: .leading, spacing: 0) {
+                    Text("The relay.")
+                        .font(.system(size: 34, weight: .light))
+                        .foregroundStyle(StackTheme.primaryText)
+
+                    Text("Anonymous messages from people who've been where you are. Read theirs. Write one forward.")
+                        .font(.system(size: 17, weight: .light))
+                        .foregroundStyle(StackTheme.secondaryText)
+                        .lineSpacing(4)
+                        .padding(.top, 16)
+
+                    if !priceString.isEmpty {
+                        Text("\(priceString) · one time · forever")
+                            .font(.system(size: 15, weight: .light))
+                            .foregroundStyle(StackTheme.tertiaryText)
+                            .padding(.top, 24)
+                    }
+                }
+                .padding(.horizontal, 28)
+
+                Spacer()
+
+                VStack(spacing: 0) {
+                    Button {
+                        Task { await purchase() }
+                    } label: {
+                        Group {
+                            if isPurchasing {
+                                ProgressView()
+                                    .tint(StackTheme.background)
+                            } else {
+                                Text("Unlock STACK")
+                            }
+                        }
+                        .font(.system(size: 15, weight: .light))
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(StackTheme.primaryText)
                         .clipShape(.rect(cornerRadius: 12))
-                }
-                .disabled(isPurchasing)
-                .padding(.horizontal, 28)
+                    }
+                    .disabled(isPurchasing || isRestoring || offering == nil)
 
-                Text("One time. No subscription.")
-                    .font(.system(size: 12, weight: .light))
-                    .foregroundStyle(StackTheme.tertiaryText)
-                    .padding(.top, 8)
-
-                Button {
-                    // TODO: StoreKit restore purchases
-                    Task { await restorePurchases() }
-                } label: {
-                    Text("Restore purchases")
+                    Button {
+                        Task { await restore() }
+                    } label: {
+                        Group {
+                            if isRestoring {
+                                ProgressView()
+                                    .tint(StackTheme.tertiaryText)
+                                    .scaleEffect(0.75)
+                            } else {
+                                Text("Restore purchases")
+                            }
+                        }
                         .font(.system(size: 13, weight: .light))
                         .foregroundStyle(StackTheme.tertiaryText)
+                        .padding(.vertical, 12)
+                    }
+                    .disabled(isPurchasing || isRestoring)
+                    .padding(.top, 16)
+
+                    if let error = errorMessage {
+                        Text(error)
+                            .font(.system(size: 12, weight: .light))
+                            .foregroundStyle(StackTheme.tertiaryText)
+                            .padding(.top, 8)
+                    }
                 }
-                .padding(.top, 16)
+                .padding(.horizontal, 28)
                 .padding(.bottom, 48)
             }
         }
+        .task {
+            await loadOffering()
+        }
     }
 
-    private func paywallFeature(_ text: String) -> some View {
-        Text(text)
-            .font(.system(size: 15, weight: .light))
-            .foregroundStyle(StackTheme.secondaryText)
+    private func loadOffering() async {
+        do {
+            let offerings = try await Purchases.shared.offerings()
+            offering = offerings.current
+        } catch {
+            // Price won't display — CTA stays disabled
+        }
     }
 
-    private func purchaseLifetime() async {
+    private func purchase() async {
+        guard let package = offering?.lifetime else { return }
         isPurchasing = true
-        defer { isPurchasing = false }
+        errorMessage = nil
+
         do {
-            let products = try await Product.products(for: ["com.stack.app.lifetime"])
-            guard let product = products.first else { return }
-            let result = try await product.purchase()
-            switch result {
-            case .success(let verification):
-                if case .verified = verification {
-                    store.lifetimePurchased = true
-                    store.save()
-                    dismiss()
-                }
-            case .userCancelled, .pending:
-                break
-            @unknown default:
-                break
+            let (_, customerInfo, userCancelled) = try await Purchases.shared.purchase(package: package)
+            if !userCancelled {
+                sync(customerInfo)
+                dismiss()
             }
         } catch {
-            // Purchase failed silently
+            errorMessage = "Something went wrong. Try again."
+            Task {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                errorMessage = nil
+            }
         }
+        isPurchasing = false
     }
 
-    private func restorePurchases() async {
+    private func restore() async {
+        isRestoring = true
+        errorMessage = nil
+
         do {
-            try await AppStore.sync()
-            for await result in Transaction.currentEntitlements {
-                if case .verified(let transaction) = result,
-                   transaction.productID == "com.stack.app.lifetime" {
-                    store.lifetimePurchased = true
-                    store.save()
-                    dismiss()
-                    return
-                }
+            let customerInfo = try await Purchases.shared.restorePurchases()
+            sync(customerInfo)
+            if customerInfo.entitlements["Stack Forever"]?.isActive == true {
+                dismiss()
             }
         } catch {
-            // Restore failed silently
+            errorMessage = "Restore failed. Try again."
+            Task {
+                try? await Task.sleep(nanoseconds: 3_000_000_000)
+                errorMessage = nil
+            }
         }
+        isRestoring = false
+    }
+
+    private func sync(_ customerInfo: CustomerInfo) {
+        let active = customerInfo.entitlements["Stack Forever"]?.isActive == true
+        store.lifetimePurchased = active
+        store.save()
     }
 }

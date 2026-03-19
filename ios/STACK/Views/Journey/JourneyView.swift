@@ -49,6 +49,8 @@ struct JourneyView: View {
                         Text("Start new chapter")
                             .font(.system(size: 14, weight: .light))
                             .foregroundStyle(StackTheme.tertiaryText)
+                            .padding(.vertical, 14)
+                            .contentShape(Rectangle())
                     }
                     .padding(.top, 40)
                     .padding(.bottom, 32)
@@ -87,7 +89,7 @@ struct JourneyView: View {
 
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 Text("\(chapter.daysCount)")
-                    .font(.system(size: 40, weight: .thin))
+                    .font(.system(size: 40, weight: .light))
                     .foregroundStyle(StackTheme.primaryText)
 
                 Text("days")
@@ -113,7 +115,7 @@ struct JourneyView: View {
 
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 Text("\(chapter.daysCount)")
-                    .font(.system(size: 28, weight: .thin))
+                    .font(.system(size: 28, weight: .light))
                     .foregroundStyle(StackTheme.secondaryText)
 
                 Text("days")

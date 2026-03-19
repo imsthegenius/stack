@@ -55,7 +55,7 @@ struct StacksView: View {
                     .frame(width: 40, height: 40)
 
                 Text(Milestone.shortLabel(for: days))
-                    .font(.system(size: 15, weight: .thin))
+                    .font(.system(size: 15, weight: .light))
                     .foregroundStyle(Color(hex: "C8A96E"))
             }
             .frame(width: 40, height: 40)
@@ -66,9 +66,9 @@ struct StacksView: View {
                         .font(.system(size: 16, weight: .light))
                         .foregroundStyle(StackTheme.primaryText)
 
-                    if !store.receivedRelayMilestoneDays.contains(days) {
+                    if !store.receivedRelayDays.contains(days) {
                         Circle()
-                            .fill(Color(hex: "C8A96E"))
+                            .fill(StackTheme.primaryText)
                             .frame(width: 4, height: 4)
                     }
                 }
@@ -83,7 +83,7 @@ struct StacksView: View {
             Spacer()
 
             Image(systemName: "chevron.right")
-                .font(.system(size: 12))
+                .font(.system(size: 12, weight: .light))
                 .foregroundStyle(StackTheme.tertiaryText)
         }
         .padding(.horizontal, 28)
@@ -105,7 +105,7 @@ struct StacksView: View {
                 let remaining = Milestone.daysUntil(from: store.currentDays, to: days)
                 Text("In \(remaining) days")
                     .font(.system(size: 12, weight: .light))
-                    .foregroundStyle(StackTheme.ghost)
+                    .foregroundStyle(StackTheme.tertiaryText)
             }
 
             Spacer()

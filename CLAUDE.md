@@ -2,9 +2,10 @@
 # STACK — Repo Rules
 
 ## Bundle IDs
-- Main app: `com.stack.app`
-- Widget extension: `com.stack.app.widget`
-- App Group: `group.com.stack.shared` — ALL UserDefaults must use this suite
+- Main app: `com.twohundred.stack`
+- Widget extension: `com.twohundred.stack.widget`
+- App Group: `group.com.twohundred.stack` — ALL UserDefaults must use this suite
+- App Store name: `Stack - Daily Pledge`
 
 ## Project Structure
 ```
@@ -82,7 +83,7 @@ Separator:     #1C1B19  — StackTheme.separator
 ## RevenueCat TODO Locations
 - `Views/Paywall/PaywallView.swift` — currently uses StoreKit directly, TODO comments mark where to swap in RevenueCat
 - `App/STACKApp.swift` — `Purchases.configure(withAPIKey:)` goes in `init()`
-- Product ID: `com.stack.app.lifetime`
+- Product ID: `com.twohundred.stack.lifetime`
 
 ## Supabase
 - URL: `https://wfckqpnxnzzwbgbthtsb.supabase.co`

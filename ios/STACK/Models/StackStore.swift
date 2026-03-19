@@ -7,12 +7,19 @@ class StackStore {
     var todayPledgeDate: String?
     var hasCompletedOnboarding: Bool = false
     var lifetimePurchased: Bool = false
-    var receivedRelayMilestoneDays: [Int] = []
+    var receivedRelayDays: [Int] = []
+    var writtenRelayDays: [Int] = []
+
+    // Backward compat — kept for migration only
+    var receivedRelayMilestoneDays: [Int] {
+        get { receivedRelayDays }
+        set { receivedRelayDays = newValue }
+    }
 
     private let defaults: UserDefaults
 
     init() {
-        defaults = UserDefaults(suiteName: "group.com.stack.shared") ?? .standard
+        defaults = UserDefaults(suiteName: "group.com.twohundred.stack") ?? .standard
         load()
     }
 
@@ -22,6 +29,34 @@ class StackStore {
     var milestonesEarned: [Int] { Milestone.allDays.filter { currentDays >= $0 } }
     var isMilestoneDay: Bool { Milestone.allDays.contains(currentDays) }
     var currentMilestoneLabel: String? { Milestone.label(for: currentDays) }
+
+    // MARK: - Relay Computed Properties
+
+    var isRelayDay: Bool { RelayPoint.isRelayDay(currentDays) }
+
+    var isFullscreenRelayDay: Bool {
+        RelayPoint.relayPoint(for: currentDays)?.presentation == .fullscreen
+    }
+
+    var currentRelayPoint: RelayPoint? {
+        RelayPoint.relayPoint(for: currentDays)
+    }
+
+    var nextRelayDay: Int? {
+        RelayPoint.nextRelayPoint(after: currentDays)?.day
+    }
+
+    var daysUntilNextRelay: Int? {
+        guard let next = nextRelayDay else { return nil }
+        return next - currentDays
+    }
+
+    var unreadRelayCount: Int {
+        let earnedFullscreen = RelayPoint.allRelayPoints.filter { point in
+            point.presentation == .fullscreen && currentDays >= point.day
+        }
+        return earnedFullscreen.filter { !receivedRelayDays.contains($0.day) }.count
+    }
 
     var hasPledgedToday: Bool {
         let todayString = Self.dateString(from: Date())
@@ -85,8 +120,19 @@ class StackStore {
         todayPledgeDate = defaults.string(forKey: "today_pledge_date")
         hasCompletedOnboarding = defaults.bool(forKey: "has_completed_onboarding")
         lifetimePurchased = defaults.bool(forKey: "lifetime_purchased")
-        if let relayData = defaults.array(forKey: "received_relay_milestone_days") as? [Int] {
-            receivedRelayMilestoneDays = relayData
+
+        // Migration: read from new key first, fall back to old key
+        if let relayData = defaults.array(forKey: "received_relay_days") as? [Int] {
+            receivedRelayDays = relayData
+        } else if let oldData = defaults.array(forKey: "received_relay_milestone_days") as? [Int] {
+            receivedRelayDays = oldData
+            // Migrate forward
+            defaults.set(receivedRelayDays, forKey: "received_relay_days")
+            defaults.removeObject(forKey: "received_relay_milestone_days")
+        }
+
+        if let writtenData = defaults.array(forKey: "written_relay_days") as? [Int] {
+            writtenRelayDays = writtenData
         }
     }
 
@@ -96,7 +142,8 @@ class StackStore {
         }
         defaults.set(hasCompletedOnboarding, forKey: "has_completed_onboarding")
         defaults.set(lifetimePurchased, forKey: "lifetime_purchased")
-        defaults.set(receivedRelayMilestoneDays, forKey: "received_relay_milestone_days")
+        defaults.set(receivedRelayDays, forKey: "received_relay_days")
+        defaults.set(writtenRelayDays, forKey: "written_relay_days")
         syncWidgetData()
     }
 
@@ -107,6 +154,7 @@ class StackStore {
         defaults.set(isMilestoneDay, forKey: "widget_is_milestone_today")
         defaults.set(hasPledgedToday, forKey: "widget_pledged_today")
         defaults.set(currentMilestoneLabel ?? "", forKey: "widget_milestone_label")
+        defaults.set(lifetimePurchased, forKey: "widget_lifetime_purchased")
         WidgetCenter.shared.reloadAllTimelines()
     }
 

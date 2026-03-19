@@ -1,4 +1,5 @@
 import SwiftUI
+import RevenueCat
 
 struct ContentView: View {
     @State private var store = StackStore()
@@ -13,6 +14,15 @@ struct ContentView: View {
             }
         }
         .preferredColorScheme(.dark)
+        .task {
+            for await customerInfo in Purchases.shared.customerInfoStream {
+                let active = customerInfo.entitlements["Stack Forever"]?.isActive == true
+                if store.lifetimePurchased != active {
+                    store.lifetimePurchased = active
+                    store.save()
+                }
+            }
+        }
     }
 
     private var mainTabView: some View {

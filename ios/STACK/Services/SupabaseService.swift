@@ -5,7 +5,7 @@ class SupabaseService {
     private init() {}
 
     static let supabaseURL = "https://wfckqpnxnzzwbgbthtsb.supabase.co"
-    static let supabaseAnonKey = "REPLACE_WITH_SUPABASE_ANON_KEY" // TODO: replace from Supabase dashboard → Settings → API → anon/public key
+    static let supabaseAnonKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndmY2txcG54bnp6d2JnYnRodHNiIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM4NjU0MDUsImV4cCI6MjA4OTQ0MTQwNX0.dhp_UWWnKfkmAGvKrhyPbWnXDuq-ZSbfuBYULgt2ws4"
 
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
@@ -14,11 +14,11 @@ class SupabaseService {
         return URLSession(configuration: config)
     }()
 
-    // MARK: - Fetch
+    // MARK: - Fetch (v2)
 
-    /// Fetch a relay message for a given milestone. Returns nil on error, timeout, or empty pool.
-    func fetchRelayMessage(milestone: Int) async -> RelayMessage? {
-        guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/relay_messages?milestone_days=eq.\(milestone)&is_active=eq.true&order=created_at.desc&limit=10") else {
+    func fetchRelayMessage(targetDay: Int) async -> RelayMessage? {
+        guard Self.supabaseAnonKey != "REPLACE_WITH_SUPABASE_ANON_KEY" else { return nil }
+        guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/relay_messages?target_day=eq.\(targetDay)&is_active=eq.true&order=created_at.desc&limit=10") else {
             return nil
         }
 
@@ -40,10 +40,18 @@ class SupabaseService {
         }
     }
 
-    // MARK: - Submit
+    // MARK: - Fetch (v1 deprecated wrapper)
 
-    /// Submit a new relay message. Throws on non-2xx response.
-    func submitRelayMessage(text: String, milestone: Int) async throws {
+    func fetchRelayMessage(milestone: Int) async -> RelayMessage? {
+        await fetchRelayMessage(targetDay: milestone)
+    }
+
+    // MARK: - Submit (v2)
+
+    func submitRelayMessage(text: String, targetDay: Int, writerDay: Int) async throws {
+        guard Self.supabaseAnonKey != "REPLACE_WITH_SUPABASE_ANON_KEY" else {
+            throw URLError(.userAuthenticationRequired)
+        }
         guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/relay_messages") else {
             throw URLError(.badURL)
         }
@@ -54,8 +62,10 @@ class SupabaseService {
         request.setValue("return=minimal", forHTTPHeaderField: "Prefer")
 
         let body: [String: Any] = [
-            "milestone_days": milestone,
-            "text": text
+            "target_day": targetDay,
+            "writer_day": writerDay,
+            "text": text,
+            "is_seed": false
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
@@ -65,9 +75,14 @@ class SupabaseService {
         }
     }
 
+    // MARK: - Submit (v1 deprecated wrapper)
+
+    func submitRelayMessage(text: String, milestone: Int) async throws {
+        try await submitRelayMessage(text: text, targetDay: milestone, writerDay: milestone)
+    }
+
     // MARK: - Report
 
-    /// Report a relay message as inappropriate. Throws on non-2xx response.
     func reportRelayMessage(id: String) async throws {
         guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/rpc/report_relay_message") else {
             throw URLError(.badURL)

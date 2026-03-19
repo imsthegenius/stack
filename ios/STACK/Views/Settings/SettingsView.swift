@@ -1,9 +1,14 @@
 import SwiftUI
+import RevenueCat
+import RevenueCatUI
 
 struct SettingsView: View {
     let store: StackStore
     @State private var showWidgetInstructions: Bool = false
     @State private var showPaywall: Bool = false
+    @State private var showCustomerCenter: Bool = false
+    @State private var isRestoring: Bool = false
+    @State private var priceString: String = ""
 
     var body: some View {
         NavigationStack {
@@ -24,7 +29,7 @@ struct SettingsView: View {
                     } label: {
                         settingsRow(title: "Add to lock screen", trailing: {
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 12))
+                                .font(.system(size: 12, weight: .light))
                                 .foregroundStyle(StackTheme.tertiaryText)
                         })
                     }
@@ -36,16 +41,52 @@ struct SettingsView: View {
 
                     if store.lifetimePurchased {
                         settingsRow(title: "Lifetime · Unlocked", trailing: { EmptyView() })
+
+                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+
+                        Button {
+                            showCustomerCenter = true
+                        } label: {
+                            settingsRow(title: "Manage", trailing: {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .light))
+                                    .foregroundStyle(StackTheme.tertiaryText)
+                            })
+                        }
                     } else {
                         Button {
                             showPaywall = true
                         } label: {
                             settingsRow(title: "Unlock STACK", trailing: {
-                                Text("· $4.99")
-                                    .font(.system(size: 14, weight: .light))
-                                    .foregroundStyle(StackTheme.tertiaryText)
+                                if !priceString.isEmpty {
+                                    Text("· \(priceString)")
+                                        .font(.system(size: 14, weight: .light))
+                                        .foregroundStyle(StackTheme.tertiaryText)
+                                }
                             })
                         }
+
+                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+
+                        Button {
+                            Task { await restoreSettingsPurchases() }
+                        } label: {
+                            HStack {
+                                Text("Restore purchases")
+                                    .font(.system(size: 14, weight: .light))
+                                    .foregroundStyle(StackTheme.tertiaryText)
+                                Spacer()
+                                if isRestoring {
+                                    ProgressView()
+                                        .tint(StackTheme.tertiaryText)
+                                        .scaleEffect(0.75)
+                                }
+                            }
+                            .padding(.horizontal, 28)
+                            .padding(.vertical, 16)
+                            .contentShape(Rectangle())
+                        }
+                        .disabled(isRestoring)
                     }
 
                     StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
@@ -54,9 +95,11 @@ struct SettingsView: View {
                         .padding(.top, 24)
 
                     VStack(alignment: .leading, spacing: 12) {
-                        Text("Version 1.0")
-                            .font(.system(size: 13, weight: .light))
-                            .foregroundStyle(StackTheme.secondaryText)
+                        if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
+                            Text("Version \(version)")
+                                .font(.system(size: 13, weight: .light))
+                                .foregroundStyle(StackTheme.secondaryText)
+                        }
 
                         Text("No notifications. No streaks. No social.")
                             .font(.system(size: 13, weight: .light))
@@ -79,9 +122,39 @@ struct SettingsView: View {
             .sheet(isPresented: $showWidgetInstructions) {
                 WidgetInstructionsSheet()
             }
-            .fullScreenCover(isPresented: $showPaywall) {
+            .sheet(isPresented: $showPaywall) {
                 PaywallView(store: store)
             }
+            .sheet(isPresented: $showCustomerCenter) {
+                CustomerCenterView()
+            }
+            .task {
+                await loadPrice()
+            }
+        }
+    }
+
+    private func loadPrice() async {
+        do {
+            let offerings = try await Purchases.shared.offerings()
+            if let price = offerings.current?.lifetime?.storeProduct.localizedPriceString {
+                priceString = price
+            }
+        } catch {
+            // Price won't display
+        }
+    }
+
+    private func restoreSettingsPurchases() async {
+        isRestoring = true
+        defer { isRestoring = false }
+        do {
+            let customerInfo = try await Purchases.shared.restorePurchases()
+            let active = customerInfo.entitlements["Stack Forever"]?.isActive == true
+            store.lifetimePurchased = active
+            store.save()
+        } catch {
+            // Restore failed silently
         }
     }
 
@@ -144,10 +217,10 @@ struct WidgetInstructionsSheet: View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(StackTheme.ghost)
+                    .stroke(StackTheme.ghost, lineWidth: 1)
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
-                    .font(.system(size: 14))
+                    .font(.system(size: 14, weight: .light))
                     .foregroundStyle(StackTheme.secondaryText)
             }
 
