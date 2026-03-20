@@ -87,7 +87,8 @@ struct SignInView: View {
                 isProcessing = false
 
                 if AuthService.shared.isSignedIn {
-                    // Sync local data to server on first sign-in
+                    // Load server data first (returning user may have data), then sync local
+                    store.loadFromServer()
                     store.syncToServer()
                 } else {
                     errorMessage = AuthService.shared.errorMessage ?? "Sign in failed."

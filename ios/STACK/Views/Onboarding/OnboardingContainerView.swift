@@ -11,6 +11,9 @@ struct OnboardingContainerView: View {
     @State private var showAddChapter: Bool = false
     @State private var addChapterStart: Date = Date()
     @State private var addChapterEnd: Date = Date()
+    @State private var showConfirmation: Bool = false
+    @State private var confirmedDate: Date?
+    @State private var showHistorySummary: Bool = false
     enum OnboardingPath {
         case new
         case existing
@@ -88,12 +91,28 @@ struct OnboardingContainerView: View {
                 .padding(.top, 8)
             }
         }
+        .overlay(alignment: .topTrailing) {
+            if currentPage < 3 {
+                Button {
+                    withAnimation(.smooth) { currentPage = 3 }
+                } label: {
+                    Text("Skip")
+                        .font(.system(size: 15, weight: .light))
+                        .foregroundStyle(StackTheme.tertiaryText)
+                        .padding(16)
+                        .contentShape(Rectangle())
+                }
+                .padding(.top, 8)
+            }
+        }
         .gesture(
             currentPage < 3 ?
-            DragGesture(minimumDistance: 50)
+            DragGesture(minimumDistance: 30)
                 .onEnded { value in
-                    if value.translation.width < -50 {
+                    if value.translation.width < -30 {
                         withAnimation(.smooth) { currentPage += 1 }
+                    } else if value.translation.width > 30 && currentPage > 0 {
+                        withAnimation(.smooth) { currentPage -= 1 }
                     }
                 }
             : nil
@@ -115,6 +134,19 @@ struct OnboardingContainerView: View {
                 .font(.system(size: 17, weight: .light))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
+
+            Spacer()
+
+            Button {
+                store.hasCompletedOnboarding = true
+                store.save()
+            } label: {
+                Text("I already have an account")
+                    .font(.system(size: 13, weight: .light))
+                    .foregroundStyle(StackTheme.tertiaryText)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.bottom, 24)
         }
         .padding(.horizontal, 28)
     }
@@ -168,6 +200,11 @@ struct OnboardingContainerView: View {
                 .font(.system(size: 17, weight: .light))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
+
+            Text("Your first week of messages is free. After that, one payment unlocks the relay forever.")
+                .font(.system(size: 15, weight: .light))
+                .foregroundStyle(StackTheme.tertiaryText)
+                .padding(.top, 24)
         }
         .padding(.horizontal, 28)
     }
@@ -212,47 +249,98 @@ struct OnboardingContainerView: View {
 
     private var screen5A: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("When did your current chapter begin?")
-                .font(.system(size: 34, weight: .light))
-                .foregroundStyle(StackTheme.primaryText)
+            if showConfirmation, let date = confirmedDate {
+                let dayCount = max(1, (Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: date), to: Calendar.current.startOfDay(for: Date())).day ?? 0) + 1)
 
-            Text("Or tap below if today is Day 1.")
-                .font(.system(size: 16, weight: .light))
-                .foregroundStyle(StackTheme.secondaryText)
+                Text("Starting from \(Self.formatDate(date)).")
+                    .font(.system(size: 34, weight: .light))
+                    .foregroundStyle(StackTheme.primaryText)
+
+                Text("Day \(dayCount).")
+                    .font(.system(size: 34, weight: .light))
+                    .foregroundStyle(StackTheme.primaryText)
+                    .padding(.top, 8)
+
+                Spacer()
+
+                Button {
+                    let isToday = Calendar.current.isDateInToday(date)
+                    let startDate = isToday
+                        ? Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: date))!
+                        : date
+                    store.createInitialChapter(startDate: startDate)
+                } label: {
+                    Text("Let's go")
+                        .font(.system(size: 15, weight: .light))
+                        .foregroundStyle(StackTheme.background)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(StackTheme.primaryText)
+                        .clipShape(.rect(cornerRadius: 12))
+                }
+
+                Button {
+                    withAnimation(.smooth) { showConfirmation = false }
+                } label: {
+                    Text("Change date")
+                        .font(.system(size: 13, weight: .light))
+                        .foregroundStyle(StackTheme.tertiaryText)
+                        .padding(.vertical, 12)
+                }
+                .frame(maxWidth: .infinity)
                 .padding(.top, 8)
+            } else {
+                Text("When did your current chapter begin?")
+                    .font(.system(size: 34, weight: .light))
+                    .foregroundStyle(StackTheme.primaryText)
 
-            DatePicker("", selection: $selectedDate, in: ...Date(), displayedComponents: .date)
-                .datePickerStyle(.wheel)
-                .labelsHidden()
-                .colorScheme(.dark)
+                Text("Or tap below if today is Day 1.")
+                    .font(.system(size: 16, weight: .light))
+                    .foregroundStyle(StackTheme.secondaryText)
+                    .padding(.top, 8)
+
+                DatePicker("", selection: $selectedDate, in: ...Date(), displayedComponents: .date)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .colorScheme(.dark)
+                    .padding(.top, 24)
+
+                Button {
+                    confirmedDate = selectedDate
+                    withAnimation(.smooth) { showConfirmation = true }
+                } label: {
+                    let isToday = Calendar.current.isDateInToday(selectedDate)
+                    Text(isToday ? "This is Day 1" : "Start from \(Self.formatDate(selectedDate))")
+                        .font(.system(size: 15, weight: .light))
+                        .foregroundStyle(StackTheme.background)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .background(StackTheme.primaryText)
+                        .clipShape(.rect(cornerRadius: 12))
+                }
                 .padding(.top, 24)
 
-            Button {
-                let isToday = Calendar.current.isDateInToday(selectedDate)
-                let startDate = isToday
-                    ? Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: selectedDate))!
-                    : selectedDate
-                store.createInitialChapter(startDate: startDate)
-            } label: {
-                let isToday = Calendar.current.isDateInToday(selectedDate)
-                Text(isToday ? "This is Day 1" : "Start from \(Self.formatDate(selectedDate))")
-                    .font(.system(size: 15, weight: .light))
-                    .foregroundStyle(StackTheme.background)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(StackTheme.primaryText)
-                    .clipShape(.rect(cornerRadius: 12))
+                Text("Sign in after setup to back up your progress.")
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundStyle(StackTheme.tertiaryText)
+                    .multilineTextAlignment(.leading)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.top, 16)
             }
-            .padding(.top, 24)
-
-            Text("Sign in after setup to back up your progress.")
-                .font(.system(size: 12, weight: .light))
-                .foregroundStyle(StackTheme.tertiaryText)
-                .multilineTextAlignment(.leading)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.top, 16)
         }
         .padding(.horizontal, 28)
+    }
+
+    private var currentStartOverlapMessage: String? {
+        guard !previousChapters.isEmpty else { return nil }
+        let currentStart = Calendar.current.startOfDay(for: historyCurrentStart)
+        for entry in previousChapters {
+            if currentStart < Calendar.current.startOfDay(for: entry.endDate) {
+                let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
+                return "Overlaps with Chapter \(entry.number) (\(StackDateFormatter.string(from: entry.startDate)) – \(StackDateFormatter.string(from: entry.endDate)), \(days) days)"
+            }
+        }
+        return nil
     }
 
     private var screen5B: some View {
@@ -274,11 +362,17 @@ struct OnboardingContainerView: View {
                     .colorScheme(.dark)
                     .padding(.top, 8)
                     .onChange(of: historyCurrentStart) { _, newValue in
-                        // Fix 3: cap current chapter start to today
                         if newValue > Date() {
                             historyCurrentStart = Date()
                         }
                     }
+
+                if let overlap = currentStartOverlapMessage {
+                    Text(overlap)
+                        .font(.system(size: 13, weight: .light))
+                        .foregroundStyle(StackTheme.tertiaryText)
+                        .padding(.top, 4)
+                }
 
                 Toggle(isOn: $showHistory) {
                     Text("I have previous chapters")
@@ -295,13 +389,24 @@ struct OnboardingContainerView: View {
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(.top, 24)
 
-                    ForEach(previousChapters) { entry in
-                        let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
-                        Text("Chapter \(entry.number) · \(days) days · \(StackDateFormatter.string(from: entry.startDate)) – \(StackDateFormatter.string(from: entry.endDate))")
-                            .font(.system(size: 14, weight: .light))
-                            .foregroundStyle(StackTheme.tertiaryText)
-                            .padding(.top, 8)
+                    List {
+                        ForEach(previousChapters) { entry in
+                            let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
+                            Text("Chapter \(entry.number) · \(days) days · \(StackDateFormatter.string(from: entry.startDate)) – \(StackDateFormatter.string(from: entry.endDate))")
+                                .font(.system(size: 14, weight: .light))
+                                .foregroundStyle(StackTheme.tertiaryText)
+                                .listRowBackground(Color.clear)
+                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
+                        }
+                        .onDelete { offsets in
+                            previousChapters.remove(atOffsets: offsets)
+                            renumberChapters()
+                        }
                     }
+                    .listStyle(.plain)
+                    .scrollContentBackground(.hidden)
+                    .frame(minHeight: CGFloat(previousChapters.count) * 36)
+                    .environment(\.editMode, .constant(.active))
 
                     Button {
                         showAddChapter = true
@@ -317,16 +422,17 @@ struct OnboardingContainerView: View {
                     .padding(.top, 32)
 
                 Button {
-                    commitHistory()
+                    showHistorySummary = true
                 } label: {
                     Text("Start stacking")
                         .font(.system(size: 15, weight: .light))
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
-                        .background(StackTheme.primaryText)
+                        .background(currentStartOverlapMessage == nil ? StackTheme.primaryText : StackTheme.ghost)
                         .clipShape(.rect(cornerRadius: 12))
                 }
+                .disabled(currentStartOverlapMessage != nil)
                 .padding(.top, 24)
                 .padding(.bottom, 48)
             }
@@ -334,6 +440,19 @@ struct OnboardingContainerView: View {
         }
         .sheet(isPresented: $showAddChapter) {
             addChapterSheet
+        }
+        .alert("Ready?", isPresented: $showHistorySummary) {
+            Button("Let's go") {
+                commitHistory()
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            let currentDays = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: historyCurrentStart), to: Calendar.current.startOfDay(for: Date())).day ?? 0
+            let totalPrevious = previousChapters.reduce(0) {
+                $0 + (Calendar.current.dateComponents([.day], from: $1.startDate, to: $1.endDate).day ?? 0)
+            }
+            let chapterCount = previousChapters.count + 1
+            Text("\(chapterCount) chapters, \(currentDays + totalPrevious) total days.")
         }
     }
 
@@ -381,10 +500,14 @@ struct OnboardingContainerView: View {
                         .foregroundStyle(StackTheme.tertiaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else if addChapterOverlapsExisting {
-                    Text("This overlaps with an existing chapter.")
-                        .font(.system(size: 13, weight: .light))
-                        .foregroundStyle(StackTheme.tertiaryText)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                    if let overlapping = previousChapters.first(where: { entry in
+                        addChapterStart < entry.endDate && addChapterEnd > entry.startDate
+                    }) {
+                        Text("Overlaps with Chapter \(overlapping.number) (\(StackDateFormatter.string(from: overlapping.startDate)) – \(StackDateFormatter.string(from: overlapping.endDate)))")
+                            .font(.system(size: 13, weight: .light))
+                            .foregroundStyle(StackTheme.tertiaryText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                    }
                 }
 
                 Spacer()
@@ -427,6 +550,12 @@ struct OnboardingContainerView: View {
                     .fill(index == currentPage ? StackTheme.primaryText : StackTheme.ghost)
                     .frame(width: 5, height: 5)
             }
+        }
+    }
+
+    private func renumberChapters() {
+        previousChapters = previousChapters.enumerated().map { index, entry in
+            PreviousChapterEntry(number: index + 1, startDate: entry.startDate, endDate: entry.endDate)
         }
     }
 

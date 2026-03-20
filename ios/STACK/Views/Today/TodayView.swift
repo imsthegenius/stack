@@ -65,15 +65,14 @@ struct TodayView: View {
                         Text("Reported. Thank you.")
                             .font(.system(size: 13, weight: .light))
                             .foregroundStyle(StackTheme.tertiaryText)
-                            .padding(.top, 16)
+                            .padding(.top, 24)
                             .transition(.opacity)
                     } else {
                         VStack(alignment: .leading, spacing: 4) {
                             Text(message.text)
-                                .font(Font.custom("Georgia", size: 15))
+                                .font(Font.custom("Georgia", size: 19))
                                 .foregroundStyle(StackTheme.secondaryText)
                                 .lineSpacing(5)
-                                .lineLimit(2)
 
                             Text("— someone ahead of you")
                                 .font(.system(size: 11, weight: .light))

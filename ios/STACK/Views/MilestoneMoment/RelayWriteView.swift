@@ -50,25 +50,25 @@ struct RelayWriteView: View {
                         .font(Font.custom("Georgia", size: 18))
                         .foregroundStyle(StackTheme.primaryText)
                         .scrollContentBackground(.hidden)
-                        .background(Color.clear)
                         .onChange(of: messageText) { _, new in
                             if new.count > maxLength {
                                 messageText = String(new.prefix(maxLength))
                             }
                         }
                 }
+                .padding(12)
+                .background(StackTheme.ghost)
+                .clipShape(RoundedRectangle(cornerRadius: 8))
                 .padding(.horizontal, 28)
                 .padding(.top, 24)
                 .frame(minHeight: 160)
 
-                if maxLength - messageText.count < 100 {
-                    Text("\(maxLength - messageText.count)")
-                        .font(.system(size: 12, weight: .light))
-                        .foregroundStyle(StackTheme.tertiaryText)
-                        .frame(maxWidth: .infinity, alignment: .trailing)
-                        .padding(.horizontal, 28)
-                        .padding(.top, 8)
-                }
+                Text("\(maxLength - messageText.count)")
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundStyle(StackTheme.tertiaryText)
+                    .frame(maxWidth: .infinity, alignment: .trailing)
+                    .padding(.horizontal, 28)
+                    .padding(.top, 8)
 
                 Spacer()
 

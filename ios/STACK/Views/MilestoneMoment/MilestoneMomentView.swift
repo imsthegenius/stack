@@ -128,43 +128,54 @@ struct MilestoneMomentView: View {
         Text("·  ·  ·")
             .font(.system(size: 17, weight: .light))
             .foregroundStyle(StackTheme.tertiaryText)
+            .opacity(0.3)
+            .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: isLoading)
     }
 
     private func paidMessageView(message: RelayMessage) -> some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if reportedMessage {
-                Text("Reported. Thank you.")
-                    .font(.system(size: 15, weight: .light))
-                    .foregroundStyle(StackTheme.tertiaryText)
-            } else {
-                Text(message.text)
-                    .font(Font.custom("Georgia", size: 19))
-                    .foregroundStyle(StackTheme.primaryText)
-                    .lineSpacing(9)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-
-                HStack {
-                    Text("— someone ahead of you")
-                        .font(.system(size: 12, weight: .light))
+        VStack(spacing: 0) {
+            VStack(alignment: .leading, spacing: 0) {
+                if reportedMessage {
+                    Text("Reported. Thank you.")
+                        .font(.system(size: 15, weight: .light))
                         .foregroundStyle(StackTheme.tertiaryText)
+                } else {
+                    Text(message.text)
+                        .font(Font.custom("Georgia", size: 19))
+                        .foregroundStyle(StackTheme.primaryText)
+                        .lineSpacing(9)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Spacer()
-
-                    Button {
-                        showReportConfirmation = true
-                    } label: {
-                        Image(systemName: "flag")
-                            .font(.system(size: 11, weight: .light))
+                    HStack {
+                        Text("— someone ahead of you")
+                            .font(.system(size: 12, weight: .light))
                             .foregroundStyle(StackTheme.tertiaryText)
+
+                        Spacer()
+
+                        Button {
+                            showReportConfirmation = true
+                        } label: {
+                            Image(systemName: "flag")
+                                .font(.system(size: 11, weight: .light))
+                                .foregroundStyle(StackTheme.tertiaryText)
+                        }
                     }
+                    .padding(.top, 12)
                 }
-                .padding(.top, 12)
+            }
+            .padding(24)
+            .background(StackTheme.separator)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal, 28)
+
+            if !reportedMessage {
+                Text("Tap to write one forward →")
+                    .font(.system(size: 12, weight: .light))
+                    .foregroundStyle(StackTheme.tertiaryText)
+                    .padding(.top, 12)
             }
         }
-        .padding(24)
-        .background(StackTheme.separator)
-        .clipShape(RoundedRectangle(cornerRadius: 8))
-        .padding(.horizontal, 28)
         .contentShape(Rectangle())
         .onTapGesture { if !reportedMessage { showWritePhase = true } }
         .confirmationDialog("Report this message?", isPresented: $showReportConfirmation) {
@@ -179,7 +190,7 @@ struct MilestoneMomentView: View {
 
     private var emptyPoolView: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("You're the first person to reach this milestone in STACK.\nWhen you write something, it'll be here for the next person.")
+            Text("You're the first to reach \(headerLabel) in STACK.\nWhen you write something, it'll be here for the next person.")
                 .font(Font.custom("Georgia", size: 19))
                 .foregroundStyle(StackTheme.primaryText)
                 .lineSpacing(9)

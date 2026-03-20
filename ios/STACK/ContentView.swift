@@ -47,5 +47,6 @@ struct ContentView: View {
                 .tag(3)
         }
         .tint(StackTheme.primaryText)
+        .toolbarColorScheme(.dark, for: .tabBar)
     }
 }

@@ -11,6 +11,7 @@ struct SettingsView: View {
     @State private var isDeletingAccount: Bool = false
     @State private var deleteError: Bool = false
     @State private var showSignInSheet: Bool = false
+    @State private var showNewChapterConfirmation: Bool = false
     private var auth: AuthService { AuthService.shared }
 
     var body: some View {
@@ -78,6 +79,18 @@ struct SettingsView: View {
                             .contentShape(Rectangle())
                         }
                         .disabled(isRestoring)
+                    }
+
+                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+
+                    Button {
+                        showNewChapterConfirmation = true
+                    } label: {
+                        settingsRow(title: "Start New Chapter", trailing: {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .light))
+                                .foregroundStyle(StackTheme.tertiaryText)
+                        })
                     }
 
                     StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
@@ -211,6 +224,16 @@ struct SettingsView: View {
                 }
             } message: {
                 Text("This permanently deletes your account and all synced data. Your local data will also be erased. This cannot be undone.")
+            }
+            .alert("Start New Chapter", isPresented: $showNewChapterConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Start") {
+                    store.startNewChapter()
+                }
+            } message: {
+                let days = store.currentDays
+                let chapter = store.currentChapter?.chapterNumber ?? 1
+                Text("Your \(days) days in Chapter \(chapter) stay in your Journey forever. Your counter resets to Day 1, starting today.")
             }
             .alert("Could Not Delete", isPresented: $deleteError) {
                 Button("OK", role: .cancel) {}
