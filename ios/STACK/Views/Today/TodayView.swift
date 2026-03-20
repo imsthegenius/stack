@@ -43,6 +43,15 @@ struct TodayView: View {
 
                 counterBlock
 
+                // Relay hint — "The Whisper"
+                if store.isRelayDay && !pledgedToday && !store.receivedRelayDays.contains(store.currentDays) {
+                    Text("Someone left you something.")
+                        .font(.system(size: 13, weight: .light))
+                        .foregroundStyle(StackTheme.secondaryText)
+                        .padding(.top, 12)
+                        .transition(.opacity)
+                }
+
                 if pledgedToday {
                     Text("Stacked.")
                         .font(.system(size: 13, weight: .light))
@@ -123,6 +132,14 @@ struct TodayView: View {
         }
         .onAppear {
             pledgedToday = store.hasPledgedToday
+            // Resume relay if user pledged but killed app before relay showed
+            if pledgedToday && store.isRelayDay && !store.receivedRelayDays.contains(store.currentDays) {
+                if store.isFullscreenRelayDay {
+                    showMilestoneMoment = true
+                } else {
+                    Task { await showInlineRelayMessage() }
+                }
+            }
         }
         .onChange(of: store.hasPledgedToday) { _, newValue in
             pledgedToday = newValue

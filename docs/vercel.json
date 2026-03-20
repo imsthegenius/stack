@@ -1,0 +1,7 @@
+{
+  "buildCommand": "",
+  "outputDirectory": "public",
+  "rewrites": [
+    { "source": "/", "destination": "/privacy.html" }
+  ]
+}

@@ -9,8 +9,8 @@ class SupabaseService {
 
     private let session: URLSession = {
         let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 2.0
-        config.timeoutIntervalForResource = 4.0
+        config.timeoutIntervalForRequest = 10.0
+        config.timeoutIntervalForResource = 30.0
         return URLSession(configuration: config)
     }()
 
@@ -101,11 +101,89 @@ class SupabaseService {
         }
     }
 
+    // MARK: - User Data Sync
+
+    struct UserDataResponse: Decodable {
+        let chapters: [Chapter]?
+        let received_relay_days: [Int]?
+        let written_relay_days: [Int]?
+    }
+
+    func syncUserData(chapters: [Chapter], relayDays: [Int], writtenDays: [Int], authToken: String) async {
+        guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/user_data?on_conflict=user_id") else { return }
+        guard let userId = AuthService.shared.userId else { return }
+
+        let chaptersData: [[String: Any]] = chapters.map { chapter in
+            var dict: [String: Any] = [
+                "id": chapter.id,
+                "startDate": ISO8601DateFormatter().string(from: chapter.startDate),
+                "chapterNumber": chapter.chapterNumber
+            ]
+            if let endDate = chapter.endDate {
+                dict["endDate"] = ISO8601DateFormatter().string(from: endDate)
+            }
+            return dict
+        }
+
+        let body: [String: Any] = [
+            "user_id": userId,
+            "chapters": chaptersData,
+            "received_relay_days": relayDays,
+            "written_relay_days": writtenDays
+        ]
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        applyAuthHeaders(to: &request, token: authToken)
+        request.setValue("return=minimal,resolution=merge-duplicates", forHTTPHeaderField: "Prefer")
+        request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+
+        _ = try? await session.data(for: request)
+    }
+
+    func fetchUserData(authToken: String) async -> UserDataResponse? {
+        guard let userId = AuthService.shared.userId else { return nil }
+        guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/user_data?user_id=eq.\(userId)&limit=1") else { return nil }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "GET"
+        applyAuthHeaders(to: &request, token: authToken)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
+
+        do {
+            let (data, response) = try await session.data(for: request)
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
+
+            let decoder = makeDecoder()
+            let results = try decoder.decode([UserDataResponse].self, from: data)
+            return results.first
+        } catch {
+            return nil
+        }
+    }
+
+    func deleteUserData(authToken: String) async {
+        guard let userId = AuthService.shared.userId else { return }
+        guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/user_data?user_id=eq.\(userId)") else { return }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "DELETE"
+        applyAuthHeaders(to: &request, token: authToken)
+
+        _ = try? await session.data(for: request)
+    }
+
     // MARK: - Helpers
 
     private func applyHeaders(to request: inout URLRequest) {
         request.setValue(Self.supabaseAnonKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(Self.supabaseAnonKey)", forHTTPHeaderField: "Authorization")
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    }
+
+    private func applyAuthHeaders(to request: inout URLRequest, token: String) {
+        request.setValue(Self.supabaseAnonKey, forHTTPHeaderField: "apikey")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
     }
 

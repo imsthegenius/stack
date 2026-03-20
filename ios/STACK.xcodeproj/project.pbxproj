@@ -9,8 +9,6 @@
 /* Begin PBXBuildFile section */
 		D71E93D22F6C51B800499763 /* ReceiptParser in Frameworks */ = {isa = PBXBuildFile; productRef = D71E93D12F6C51B800499763 /* ReceiptParser */; };
 		D71E93D42F6C51B800499763 /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = D71E93D32F6C51B800499763 /* RevenueCat */; };
-		D71E93D62F6C51B800499763 /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = D71E93D52F6C51B800499763 /* RevenueCatUI */; };
-
 		XX68F986B9AE8C2F6A7820XX /* STACKWidget.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = XXCD18D422F168A015A9C7XX /* STACKWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
@@ -102,7 +100,6 @@
 			files = (
 				D71E93D42F6C51B800499763 /* RevenueCat in Frameworks */,
 				D71E93D22F6C51B800499763 /* ReceiptParser in Frameworks */,
-				D71E93D62F6C51B800499763 /* RevenueCatUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -176,7 +173,6 @@
 			packageProductDependencies = (
 				D71E93D12F6C51B800499763 /* ReceiptParser */,
 				D71E93D32F6C51B800499763 /* RevenueCat */,
-				D71E93D52F6C51B800499763 /* RevenueCatUI */,
 			);
 			productName = STACK;
 			productReference = 105FC57A2E9EAD3100EA8BCF /* STACK.app */;
@@ -666,7 +662,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.twohundred.stack.widget;
 				PRODUCT_NAME = STACKWidget;
 				SDKROOT = iphoneos;
@@ -694,7 +690,7 @@
 					"@executable_path/Frameworks",
 					"@executable_path/../../Frameworks",
 				);
-				MARKETING_VERSION = 1.0;
+				MARKETING_VERSION = 1.0.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.twohundred.stack.widget;
 				PRODUCT_NAME = STACKWidget;
 				SDKROOT = iphoneos;
@@ -777,11 +773,6 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D71E93D02F6C51B800499763 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
 			productName = RevenueCat;
-		};
-		D71E93D52F6C51B800499763 /* RevenueCatUI */ = {
-			isa = XCSwiftPackageProductDependency;
-			package = D71E93D02F6C51B800499763 /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
-			productName = RevenueCatUI;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

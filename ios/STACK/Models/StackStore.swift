@@ -163,6 +163,65 @@ class StackStore {
         defaults.set(blockedRelayMessageIDs, forKey: "blocked_relay_message_ids")
         cloud.synchronize()
         syncWidgetData()
+
+        // Fire-and-forget server sync when signed in
+        syncToServer()
+    }
+
+    // MARK: - Server Sync
+
+    func syncToServer() {
+        guard AuthService.shared.isSignedIn, let token = AuthService.shared.accessToken else { return }
+        let chaptersSnapshot = chapters
+        let relaySnapshot = receivedRelayDays
+        let writtenSnapshot = writtenRelayDays
+        Task {
+            await SupabaseService.shared.syncUserData(
+                chapters: chaptersSnapshot,
+                relayDays: relaySnapshot,
+                writtenDays: writtenSnapshot,
+                authToken: token
+            )
+        }
+    }
+
+    func loadFromServer() {
+        guard AuthService.shared.isSignedIn, let token = AuthService.shared.accessToken else { return }
+        Task {
+            guard let serverData = await SupabaseService.shared.fetchUserData(authToken: token) else { return }
+
+            await MainActor.run {
+                // Merge chapters: use whichever has more total days
+                if let serverChapters = serverData.chapters {
+                    let serverTotal = serverChapters.reduce(0) { $0 + $1.daysCount }
+                    let localTotal = chapters.reduce(0) { $0 + $1.daysCount }
+                    if serverTotal > localTotal || serverChapters.count > chapters.count {
+                        chapters = serverChapters
+                    }
+                }
+
+                // Merge relay days: union
+                if let serverRelay = serverData.received_relay_days {
+                    receivedRelayDays = Array(Set(receivedRelayDays + serverRelay))
+                }
+                if let serverWritten = serverData.written_relay_days {
+                    writtenRelayDays = Array(Set(writtenRelayDays + serverWritten))
+                }
+
+                save()
+            }
+        }
+    }
+
+    func resetForAccountDeletion() {
+        chapters = []
+        todayPledgeDate = nil
+        hasCompletedOnboarding = false
+        lifetimePurchased = false
+        receivedRelayDays = []
+        writtenRelayDays = []
+        blockedRelayMessageIDs = []
+        syncWidgetData()
     }
 
     // MARK: - iCloud Sync

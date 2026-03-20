@@ -4,13 +4,16 @@ import RevenueCat
 struct ContentView: View {
     @State private var store = StackStore()
     @State private var selectedTab: Int = 0
+    private var auth: AuthService { AuthService.shared }
 
     var body: some View {
         Group {
-            if store.hasCompletedOnboarding {
-                mainTabView
-            } else {
+            if !store.hasCompletedOnboarding {
                 OnboardingContainerView(store: store)
+            } else if !auth.isSignedIn && !auth.hasSkippedSignIn {
+                SignInView(store: store)
+            } else {
+                mainTabView
             }
         }
         .preferredColorScheme(.dark)

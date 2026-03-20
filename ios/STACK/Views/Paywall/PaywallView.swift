@@ -103,6 +103,14 @@ struct PaywallView: View {
                             .foregroundStyle(StackTheme.tertiaryText)
                             .padding(.top, 8)
                     }
+
+                    HStack(spacing: 16) {
+                        Link("Terms of Use", destination: URL(string: "https://stack.twohundred.ai/terms.html")!)
+                        Link("Privacy Policy", destination: URL(string: "https://stack.twohundred.ai/privacy.html")!)
+                    }
+                    .font(.system(size: 11, weight: .light))
+                    .foregroundStyle(StackTheme.tertiaryText)
+                    .padding(.top, 16)
                 }
                 .padding(.horizontal, 28)
                 .padding(.bottom, 48)

@@ -204,8 +204,8 @@ The relay system code is complete and builds clean. However, the app is **NOT re
 
 ## NOT AN ISSUE
 
-### User accounts / signup
-STACK intentionally has NO user accounts. All data is local (UserDefaults in App Group). Guideline 5.1.1(v) explicitly says "If your app doesn't include significant account-based features, let people use it without a login." No accounts = no account deletion requirement = no Sign in with Apple requirement.
+### User accounts / Sign in with Apple
+STACK now requires user accounts via Sign in with Apple (Supabase Auth). Users can skip sign-in and use the app locally, but are encouraged to sign in to back up progress. Account deletion is available in Settings (Apple Guideline 5.1.1(v) compliant). Sign in with Apple entitlement is configured in STACK.entitlements.
 
 ### Supabase anon key in source code
 Supabase anon keys are designed to be public. They are equivalent to a "public API key." Row-Level Security (RLS) policies on the table control what operations are allowed. The key being in the binary is by design.
@@ -223,9 +223,10 @@ Forcing `.preferredColorScheme(.dark)` is fine. Many apps do this. Not a review 
 | Category | Total | Fixed | Remaining |
 |----------|-------|-------|-----------|
 | Blockers | 11 | 10 | 1 (B11 — screenshots) |
-| High Priority | 8 | 1 | 7 (all require ASC / RevenueCat dashboard) |
+| High Priority | 8 | 2 | 6 (all require ASC / RevenueCat dashboard) |
 | Medium | 8 | 0 | 8 |
-| **Total** | **27** | **11** | **16** |
+| Auth (new) | 6 | 6 | 0 |
+| **Total** | **33** | **18** | **15** |
 
 ### Fixed (code + hosting)
 - ✅ B1 — Privacy policy email fixed (`hello@twohundred.co`)
@@ -239,17 +240,35 @@ Forcing `.preferredColorScheme(.dark)` is fine. Many apps do this. Not a review 
 - ✅ B9 — Privacy policy now covers relay message writing
 - ✅ B10 — PrivacyInfo.xcprivacy manifest created
 - ✅ H1 — Terms of Use created + hosted at https://imsthegenius.github.io/stack/terms.html
+- ✅ H5 — RevenueCat production API key in STACKApp.swift
 - ✅ H8 — Widget counter visible for all users (removed paywall gating)
+
+### Auth implementation (new — all done)
+- ✅ A1 — Supabase `user_data` table + RLS policies (`supabase/auth-migration.sql`)
+- ✅ A2 — Account deletion Edge Function (`supabase/functions/delete-user/index.ts`)
+- ✅ A3 — KeychainHelper + AuthService (token management, Sign in with Apple flow)
+- ✅ A4 — SignInView (Sign in with Apple screen, skip option)
+- ✅ A5 — ContentView three-state gate (onboarding → sign in → main)
+- ✅ A6 — SettingsView account section (sign out, delete account, sign-in-later)
+- ✅ A7 — Server sync (SupabaseService + StackStore sync/load/merge)
+- ✅ A8 — Privacy policy updated for accounts + Supabase Auth
+- ✅ A9 — PrivacyInfo.xcprivacy updated (UserID + Email data types)
+- ✅ A10 — STACK.entitlements updated (Sign in with Apple capability)
 
 ### Remaining (requires manual action)
 - ☐ B11 — Screenshots (must capture on simulator or device)
 - ☐ H2 — Age rating (App Store Connect questionnaire)
 - ☐ H3 — Category selection (Lifestyle primary, Health & Fitness secondary)
 - ☐ H4 — IAP product creation in App Store Connect
-- ☐ H5 — RevenueCat production API key (replace test key in STACKApp.swift)
-- ☐ H6 — App Privacy nutrition labels in App Store Connect
-- ☐ H7 — App Review notes
+- ☐ H6 — App Privacy nutrition labels (update to include User ID + Email, linked to identity)
+- ☐ H7 — App Review notes (update to mention sign-in flow)
 - ☐ M1-M2 — App description + keywords
 - ☐ M4-M5 — Server-side rate limiting (nice-to-have, not a blocker)
 - ☐ M7 — Verify CustomerCenterView works
-- ☐ M8 — Widget bundle version alignment
+- ✅ M8 — Widget bundle version aligned (1.0.0 in both Debug + Release)
+
+### Manual Supabase dashboard steps
+- ☐ Enable Apple provider in Authentication → Providers → Apple
+- ☐ Create Services ID in Apple Developer Console with Supabase callback URL
+- ☐ Run `supabase/auth-migration.sql` in SQL Editor
+- ☐ Deploy `delete-user` Edge Function (`supabase functions deploy delete-user`)

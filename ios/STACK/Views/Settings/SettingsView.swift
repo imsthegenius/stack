@@ -1,14 +1,17 @@
 import SwiftUI
 import RevenueCat
-import RevenueCatUI
 
 struct SettingsView: View {
     let store: StackStore
     @State private var showWidgetInstructions: Bool = false
     @State private var showPaywall: Bool = false
-    @State private var showCustomerCenter: Bool = false
     @State private var isRestoring: Bool = false
     @State private var priceString: String = ""
+    @State private var showDeleteConfirmation: Bool = false
+    @State private var isDeletingAccount: Bool = false
+    @State private var deleteError: Bool = false
+    @State private var showSignInSheet: Bool = false
+    private var auth: AuthService { AuthService.shared }
 
     var body: some View {
         NavigationStack {
@@ -41,18 +44,6 @@ struct SettingsView: View {
 
                     if store.lifetimePurchased {
                         settingsRow(title: "Lifetime · Unlocked", trailing: { EmptyView() })
-
-                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
-
-                        Button {
-                            showCustomerCenter = true
-                        } label: {
-                            settingsRow(title: "Manage", trailing: {
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12, weight: .light))
-                                    .foregroundStyle(StackTheme.tertiaryText)
-                            })
-                        }
                     } else {
                         Button {
                             showPaywall = true
@@ -91,10 +82,60 @@ struct SettingsView: View {
 
                     StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
 
+                    sectionHeader("ACCOUNT")
+                        .padding(.top, 24)
+
+                    if auth.isSignedIn {
+                        if let email = auth.userEmail {
+                            settingsRow(title: email, trailing: { EmptyView() })
+                            StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+                        }
+
+                        Button {
+                            auth.signOut()
+                        } label: {
+                            settingsRow(title: "Sign Out", trailing: { EmptyView() })
+                        }
+
+                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+
+                        Button {
+                            showDeleteConfirmation = true
+                        } label: {
+                            HStack {
+                                Text("Delete Account")
+                                    .font(.system(size: 16, weight: .light))
+                                    .foregroundStyle(.red.opacity(0.8))
+                                Spacer()
+                                if isDeletingAccount {
+                                    ProgressView()
+                                        .tint(.red.opacity(0.5))
+                                        .scaleEffect(0.75)
+                                }
+                            }
+                            .padding(.horizontal, 28)
+                            .padding(.vertical, 16)
+                            .contentShape(Rectangle())
+                        }
+                        .disabled(isDeletingAccount)
+                    } else {
+                        Button {
+                            showSignInSheet = true
+                        } label: {
+                            settingsRow(title: "Sign in with Apple", trailing: {
+                                Image(systemName: "apple.logo")
+                                    .font(.system(size: 14, weight: .light))
+                                    .foregroundStyle(StackTheme.secondaryText)
+                            })
+                        }
+                    }
+
+                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+
                     sectionHeader("LEGAL")
                         .padding(.top, 24)
 
-                    Link(destination: URL(string: "https://imsthegenius.github.io/stack/privacy.html")!) {
+                    Link(destination: URL(string: "https://stack.twohundred.ai/privacy.html")!) {
                         settingsRow(title: "Privacy Policy", trailing: {
                             Image(systemName: "arrow.up.right")
                                 .font(.system(size: 10, weight: .light))
@@ -104,7 +145,7 @@ struct SettingsView: View {
 
                     StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
 
-                    Link(destination: URL(string: "https://imsthegenius.github.io/stack/terms.html")!) {
+                    Link(destination: URL(string: "https://stack.twohundred.ai/terms.html")!) {
                         settingsRow(title: "Terms of Use", trailing: {
                             Image(systemName: "arrow.up.right")
                                 .font(.system(size: 10, weight: .light))
@@ -114,7 +155,7 @@ struct SettingsView: View {
 
                     StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
 
-                    Link(destination: URL(string: "mailto:hello@twohundred.co")!) {
+                    Link(destination: URL(string: "mailto:hello@twohundred.ai")!) {
                         settingsRow(title: "Contact Support", trailing: {
                             Image(systemName: "envelope")
                                 .font(.system(size: 12, weight: .light))
@@ -138,7 +179,9 @@ struct SettingsView: View {
                             .font(.system(size: 13, weight: .light))
                             .foregroundStyle(StackTheme.secondaryText)
 
-                        Text("Relay messages are the only data that leaves your device.")
+                        Text(auth.isSignedIn
+                             ? "Your data is backed up when signed in."
+                             : "Sign in to back up your progress across devices.")
                             .font(.system(size: 12, weight: .light))
                             .foregroundStyle(StackTheme.tertiaryText)
                     }
@@ -158,8 +201,21 @@ struct SettingsView: View {
             .sheet(isPresented: $showPaywall) {
                 PaywallView(store: store)
             }
-            .sheet(isPresented: $showCustomerCenter) {
-                CustomerCenterView()
+            .sheet(isPresented: $showSignInSheet) {
+                SignInView(store: store)
+            }
+            .alert("Delete Account", isPresented: $showDeleteConfirmation) {
+                Button("Cancel", role: .cancel) {}
+                Button("Delete", role: .destructive) {
+                    Task { await performAccountDeletion() }
+                }
+            } message: {
+                Text("This permanently deletes your account and all synced data. Your local data will also be erased. This cannot be undone.")
+            }
+            .alert("Could Not Delete", isPresented: $deleteError) {
+                Button("OK", role: .cancel) {}
+            } message: {
+                Text("Please check your connection and try again.")
             }
             .task {
                 await loadPrice()
@@ -175,6 +231,17 @@ struct SettingsView: View {
             }
         } catch {
             // Price won't display
+        }
+    }
+
+    private func performAccountDeletion() async {
+        isDeletingAccount = true
+        defer { isDeletingAccount = false }
+        let success = await AuthService.shared.deleteAccount()
+        if success {
+            store.resetForAccountDeletion()
+        } else {
+            deleteError = true
         }
     }
 

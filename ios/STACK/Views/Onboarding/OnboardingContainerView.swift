@@ -245,7 +245,7 @@ struct OnboardingContainerView: View {
             }
             .padding(.top, 24)
 
-            Text("STACK · No account. No sync. Your data stays on your device.")
+            Text("Sign in after setup to back up your progress.")
                 .font(.system(size: 12, weight: .light))
                 .foregroundStyle(StackTheme.tertiaryText)
                 .multilineTextAlignment(.leading)
