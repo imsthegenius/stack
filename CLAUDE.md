@@ -67,14 +67,18 @@ Separator:     #1C1B19  — StackTheme.separator
 - Old chapters are NEVER deleted — always visible in Journey
 - `totalDays` = sum of all chapter daysCount
 
-### Data Persistence & iCloud Sync
-- NO user accounts, NO signup, NO login — this is by design
+### User Accounts & Data Persistence
+- Users MUST create an account. Data loss is unacceptable — someone at Day 847 switching phones must not lose their history.
+- **Auth method:** Sign in with Apple (required by Apple if any third-party login is offered; use as the ONLY login method for simplicity)
+- **Backend:** Supabase Auth — stores user profile (Apple ID token, anonymous display). No email/name collected unless Apple shares it.
+- **Server-side storage:** Chapters, relay history, pledge history synced to Supabase `user_data` table keyed by Supabase auth user ID
+- **Account deletion:** REQUIRED by Apple Guideline 5.1.1(v). Must be in-app (Settings), not "email us to delete."
+- **Privacy policy:** Must be updated to reflect account creation + server-side data storage
+- **When:** Account creation screen shown after onboarding, before first use. Existing iCloud KVS sync kept as fallback/supplement.
 - Local: `UserDefaults(suiteName: "group.com.twohundred.stack")` — for widget access + immediate reads
-- Cloud: `NSUbiquitousKeyValueStore.default` — syncs chapters, onboarding state, and relay history across devices via Apple ID silently
-- Merge strategy: chapters use whichever side has more total days; relay days use union of both sets; onboarding is OR (if either side says completed, it's completed)
+- Cloud backup: `NSUbiquitousKeyValueStore.default` — kept as secondary sync layer
 - `todayPledgeDate` is local-only (pledge is per-device-per-day)
 - `lifetimePurchased` is local-only (RevenueCat handles cross-device purchase restoration)
-- iCloud KVS has a 1MB limit — more than enough for chapters + relay day arrays
 
 ### The Relay
 - Supabase: `https://wfckqpnxnzzwbgbthtsb.supabase.co`
@@ -90,15 +94,17 @@ Separator:     #1C1B19  — StackTheme.separator
 - Widget reads: `widget_current_days`, `widget_chapter_number`, `widget_total_days`, `widget_is_milestone_today`, `widget_pledged_today`, `widget_milestone_label`
 - Widget background: `.containerBackground(.clear, for: .widget)` — NEVER #0C0B09
 
-## RevenueCat TODO Locations
-- `Views/Paywall/PaywallView.swift` — currently uses StoreKit directly, TODO comments mark where to swap in RevenueCat
-- `App/STACKApp.swift` — `Purchases.configure(withAPIKey:)` goes in `init()`
+## RevenueCat
+- Production API key in `STACKApp.swift`: `appl_GZCLVMbDdSbNaXDsuIJFpjafBRp`
 - Product ID: `com.twohundred.stack.lifetime`
+- Entitlement: `Stack Forever`
 
 ## Supabase
 - URL: `https://wfckqpnxnzzwbgbthtsb.supabase.co`
-- Anonymous key placeholder: `REPLACE_WITH_SUPABASE_ANON_KEY`
-- Run `supabase/schema.sql` then `supabase/seed.sql` in the Supabase SQL editor before testing relay
+- Anon key is in `SupabaseService.swift` (hardcoded, public by design — RLS controls access)
+- Run `supabase/migrate-v1-to-v2.sql` then `supabase/seed.sql` before testing relay
+- Auth: Supabase Auth with Sign in with Apple provider (TODO: configure in Supabase dashboard)
+- User data table: `user_data` keyed by auth user ID (TODO: create schema)
 
 ## What NOT To Do
 - No confetti, particle effects, or celebration animations
