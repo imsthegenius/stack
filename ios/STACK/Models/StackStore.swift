@@ -18,10 +18,12 @@ class StackStore {
     }
 
     private let defaults: UserDefaults
+    private let cloud = NSUbiquitousKeyValueStore.default
 
     init() {
         defaults = UserDefaults(suiteName: "group.com.twohundred.stack") ?? .standard
         load()
+        observeCloudChanges()
     }
 
     var currentChapter: Chapter? { chapters.first(where: { $0.isCurrentChapter }) }
@@ -113,13 +115,20 @@ class StackStore {
         return (earnedDate ?? Date(), chapter)
     }
 
+    // MARK: - Persistence
+
     func load() {
-        if let data = defaults.data(forKey: "chapters_data"),
-           let decoded = try? JSONDecoder().decode([Chapter].self, from: data) {
+        // Try iCloud first, fall back to local
+        if let cloudData = cloud.data(forKey: "chapters_data"),
+           let decoded = try? JSONDecoder().decode([Chapter].self, from: cloudData) {
+            chapters = decoded
+        } else if let localData = defaults.data(forKey: "chapters_data"),
+                  let decoded = try? JSONDecoder().decode([Chapter].self, from: localData) {
             chapters = decoded
         }
+
         todayPledgeDate = defaults.string(forKey: "today_pledge_date")
-        hasCompletedOnboarding = defaults.bool(forKey: "has_completed_onboarding")
+        hasCompletedOnboarding = cloud.bool(forKey: "has_completed_onboarding") || defaults.bool(forKey: "has_completed_onboarding")
         lifetimePurchased = defaults.bool(forKey: "lifetime_purchased")
 
         // Migration: read from new key first, fall back to old key
@@ -127,7 +136,6 @@ class StackStore {
             receivedRelayDays = relayData
         } else if let oldData = defaults.array(forKey: "received_relay_milestone_days") as? [Int] {
             receivedRelayDays = oldData
-            // Migrate forward
             defaults.set(receivedRelayDays, forKey: "received_relay_days")
             defaults.removeObject(forKey: "received_relay_milestone_days")
         }
@@ -141,15 +149,64 @@ class StackStore {
     }
 
     func save() {
+        // Save to local UserDefaults (for widget + immediate access)
         if let encoded = try? JSONEncoder().encode(chapters) {
             defaults.set(encoded, forKey: "chapters_data")
+            cloud.set(encoded, forKey: "chapters_data")
         }
         defaults.set(hasCompletedOnboarding, forKey: "has_completed_onboarding")
+        cloud.set(hasCompletedOnboarding, forKey: "has_completed_onboarding")
         defaults.set(lifetimePurchased, forKey: "lifetime_purchased")
         defaults.set(receivedRelayDays, forKey: "received_relay_days")
+        cloud.set(receivedRelayDays, forKey: "received_relay_days")
         defaults.set(writtenRelayDays, forKey: "written_relay_days")
         defaults.set(blockedRelayMessageIDs, forKey: "blocked_relay_message_ids")
+        cloud.synchronize()
         syncWidgetData()
+    }
+
+    // MARK: - iCloud Sync
+
+    private func observeCloudChanges() {
+        NotificationCenter.default.addObserver(
+            forName: NSUbiquitousKeyValueStore.didChangeExternallyNotification,
+            object: cloud,
+            queue: .main
+        ) { [weak self] _ in
+            self?.mergeCloudData()
+        }
+        cloud.synchronize()
+    }
+
+    private func mergeCloudData() {
+        // Chapters: use whichever has more data (more chapters or higher day count)
+        if let cloudData = cloud.data(forKey: "chapters_data"),
+           let cloudChapters = try? JSONDecoder().decode([Chapter].self, from: cloudData) {
+            let cloudTotal = cloudChapters.reduce(0) { $0 + $1.daysCount }
+            let localTotal = chapters.reduce(0) { $0 + $1.daysCount }
+            if cloudTotal > localTotal || cloudChapters.count > chapters.count {
+                chapters = cloudChapters
+                if let encoded = try? JSONEncoder().encode(chapters) {
+                    defaults.set(encoded, forKey: "chapters_data")
+                }
+                syncWidgetData()
+            }
+        }
+
+        // Onboarding: if either side says completed, it's completed
+        if cloud.bool(forKey: "has_completed_onboarding") {
+            hasCompletedOnboarding = true
+            defaults.set(true, forKey: "has_completed_onboarding")
+        }
+
+        // Relay days: merge (union of both sets)
+        if let cloudRelay = cloud.array(forKey: "received_relay_days") as? [Int] {
+            let merged = Array(Set(receivedRelayDays + cloudRelay))
+            if merged.count > receivedRelayDays.count {
+                receivedRelayDays = merged
+                defaults.set(receivedRelayDays, forKey: "received_relay_days")
+            }
+        }
     }
 
     func syncWidgetData() {

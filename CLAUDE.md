@@ -6,6 +6,7 @@
 - Widget extension: `com.twohundred.stack.widget`
 - App Group: `group.com.twohundred.stack` — ALL UserDefaults must use this suite
 - App Store name: `Stack - Daily Pledge`
+- iCloud container: default (uses `NSUbiquitousKeyValueStore` — no container ID needed)
 
 ## Project Structure
 ```
@@ -65,6 +66,15 @@ Separator:     #1C1B19  — StackTheme.separator
 - A new chapter = old chapter gets `endDate = today`, new Chapter created
 - Old chapters are NEVER deleted — always visible in Journey
 - `totalDays` = sum of all chapter daysCount
+
+### Data Persistence & iCloud Sync
+- NO user accounts, NO signup, NO login — this is by design
+- Local: `UserDefaults(suiteName: "group.com.twohundred.stack")` — for widget access + immediate reads
+- Cloud: `NSUbiquitousKeyValueStore.default` — syncs chapters, onboarding state, and relay history across devices via Apple ID silently
+- Merge strategy: chapters use whichever side has more total days; relay days use union of both sets; onboarding is OR (if either side says completed, it's completed)
+- `todayPledgeDate` is local-only (pledge is per-device-per-day)
+- `lifetimePurchased` is local-only (RevenueCat handles cross-device purchase restoration)
+- iCloud KVS has a 1MB limit — more than enough for chapters + relay day arrays
 
 ### The Relay
 - Supabase: `https://wfckqpnxnzzwbgbthtsb.supabase.co`
