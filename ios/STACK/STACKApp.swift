@@ -5,7 +5,7 @@ import RevenueCat
 struct STACKApp: App {
     init() {
         Purchases.logLevel = .error
-        Purchases.configure(withAPIKey: "test_HUKGKJUpyCSWrvkxSdPOVUrKSyy")
+        Purchases.configure(withAPIKey: "appl_GZCLVMbDdSbNaXDsuIJFpjafBRp")
 
         let lightFont34 = UIFont.systemFont(ofSize: 34, weight: .light)
         let lightFont17 = UIFont.systemFont(ofSize: 17, weight: .light)
