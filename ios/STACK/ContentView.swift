@@ -6,11 +6,19 @@ struct ContentView: View {
     @State private var selectedTab: Int = 0
     private var auth: AuthService { AuthService.shared }
 
+    private var requiresSignIn: Bool {
+        #if DEBUG
+        return !auth.isSignedIn && !auth.hasSkippedSignIn
+        #else
+        return !auth.isSignedIn
+        #endif
+    }
+
     var body: some View {
         Group {
             if !store.hasCompletedOnboarding {
                 OnboardingContainerView(store: store)
-            } else if !auth.isSignedIn && !auth.hasSkippedSignIn {
+            } else if requiresSignIn {
                 SignInView(store: store)
             } else {
                 mainTabView
@@ -31,22 +39,21 @@ struct ContentView: View {
     private var mainTabView: some View {
         TabView(selection: $selectedTab) {
             TodayView(store: store, switchToJourneyTab: { selectedTab = 2 })
-                .tabItem { Text("Today") }
+                .tabItem { Label("Today", systemImage: "circle") }
                 .tag(0)
 
             StacksView(store: store)
-                .tabItem { Text("Stacks") }
+                .tabItem { Label("Stacks", systemImage: "square.stack") }
                 .tag(1)
 
             JourneyView(store: store)
-                .tabItem { Text("Journey") }
+                .tabItem { Label("Journey", systemImage: "book.pages") }
                 .tag(2)
 
             SettingsView(store: store)
-                .tabItem { Text("Settings") }
+                .tabItem { Label("Settings", systemImage: "gearshape") }
                 .tag(3)
         }
         .tint(StackTheme.primaryText)
-        .toolbarColorScheme(.dark, for: .tabBar)
     }
 }

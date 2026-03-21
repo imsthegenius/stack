@@ -129,6 +129,20 @@ class StackStore {
 
         todayPledgeDate = defaults.string(forKey: "today_pledge_date")
         hasCompletedOnboarding = cloud.bool(forKey: "has_completed_onboarding") || defaults.bool(forKey: "has_completed_onboarding")
+
+        #if DEBUG
+        // Launch argument: -debugDay N — backdates chapter to N days ago
+        let args = ProcessInfo.processInfo.arguments
+        if let idx = args.firstIndex(of: "-debugDay"), idx + 1 < args.count,
+           let day = Int(args[idx + 1]), day > 0 {
+            let start = Calendar.current.date(byAdding: .day, value: -day, to: Calendar.current.startOfDay(for: Date()))!
+            chapters = [Chapter(startDate: start, chapterNumber: 1)]
+            hasCompletedOnboarding = true
+            receivedRelayDays = []
+            todayPledgeDate = nil
+            save()
+        }
+        #endif
         lifetimePurchased = defaults.bool(forKey: "lifetime_purchased")
 
         // Migration: read from new key first, fall back to old key
@@ -138,6 +152,12 @@ class StackStore {
             receivedRelayDays = oldData
             defaults.set(receivedRelayDays, forKey: "received_relay_days")
             defaults.removeObject(forKey: "received_relay_milestone_days")
+        }
+
+        // One-time migration: clear stale receivedRelayDays from before relay_messages table existed
+        if !defaults.bool(forKey: "relay_v2_seed_reset_4") {
+            receivedRelayDays = []
+            defaults.set(true, forKey: "relay_v2_seed_reset_4")
         }
 
         if let writtenData = defaults.array(forKey: "written_relay_days") as? [Int] {

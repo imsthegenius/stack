@@ -24,6 +24,27 @@ struct STACKApp: App {
         UINavigationBar.appearance().standardAppearance = appearance
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
+
+        let tertiaryColor = UIColor(red: 74/255, green: 72/255, blue: 69/255, alpha: 1)
+        let tabFont = UIFont.systemFont(ofSize: 10, weight: .light)
+
+        let tabAppearance = UITabBarAppearance()
+        tabAppearance.configureWithDefaultBackground()
+        tabAppearance.backgroundColor = UIColor(red: 12/255, green: 11/255, blue: 9/255, alpha: 1)
+        tabAppearance.stackedLayoutAppearance.normal.iconColor = tertiaryColor
+        tabAppearance.stackedLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: tertiaryColor, .font: tabFont]
+        tabAppearance.stackedLayoutAppearance.selected.iconColor = primaryColor
+        tabAppearance.stackedLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: primaryColor, .font: tabFont]
+        tabAppearance.inlineLayoutAppearance.normal.iconColor = tertiaryColor
+        tabAppearance.inlineLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: tertiaryColor, .font: tabFont]
+        tabAppearance.inlineLayoutAppearance.selected.iconColor = primaryColor
+        tabAppearance.inlineLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: primaryColor, .font: tabFont]
+        tabAppearance.compactInlineLayoutAppearance.normal.iconColor = tertiaryColor
+        tabAppearance.compactInlineLayoutAppearance.normal.titleTextAttributes = [.foregroundColor: tertiaryColor, .font: tabFont]
+        tabAppearance.compactInlineLayoutAppearance.selected.iconColor = primaryColor
+        tabAppearance.compactInlineLayoutAppearance.selected.titleTextAttributes = [.foregroundColor: primaryColor, .font: tabFont]
+        UITabBar.appearance().standardAppearance = tabAppearance
+        UITabBar.appearance().scrollEdgeAppearance = tabAppearance
     }
 
     var body: some Scene {

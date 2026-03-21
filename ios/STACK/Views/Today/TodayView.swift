@@ -12,6 +12,7 @@ struct TodayView: View {
     @State private var relayTask: Task<Void, Never>? = nil
     @State private var showReportConfirmation: Bool = false
     @State private var inlineRelayReported: Bool = false
+    @State private var relayLoading: Bool = false
 
     // The relay point to pass to MilestoneMomentView (for non-milestone fullscreen days)
     private var fullscreenRelayPoint: RelayPoint? {
@@ -43,8 +44,7 @@ struct TodayView: View {
 
                 counterBlock
 
-                // Relay hint — "The Whisper"
-                if store.isRelayDay && !pledgedToday && !store.receivedRelayDays.contains(store.currentDays) {
+                if pledgedToday && relayLoading {
                     Text("Someone left you something.")
                         .font(.system(size: 13, weight: .light))
                         .foregroundStyle(StackTheme.secondaryText)
@@ -53,10 +53,10 @@ struct TodayView: View {
                 }
 
                 if pledgedToday {
-                    Text("Stacked.")
+                    Text("Locked in.")
                         .font(.system(size: 13, weight: .light))
                         .foregroundStyle(StackTheme.tertiaryText)
-                        .padding(.top, 8)
+                        .padding(.top, 20)
                 }
 
                 // Inline relay message (free days 1-6 or paid user on inline relay day)
@@ -74,7 +74,7 @@ struct TodayView: View {
                                 .foregroundStyle(StackTheme.secondaryText)
                                 .lineSpacing(5)
 
-                            Text("— someone ahead of you")
+                            Text("— from \(writerLabel(for: message))")
                                 .font(.system(size: 11, weight: .light))
                                 .foregroundStyle(StackTheme.tertiaryText)
                         }
@@ -131,12 +131,19 @@ struct TodayView: View {
         }
         .onAppear {
             pledgedToday = store.hasPledgedToday
+            #if DEBUG
+            print("[RELAY DEBUG] onAppear — currentDays=\(store.currentDays) pledgedToday=\(pledgedToday) isRelayDay=\(store.isRelayDay) isFullscreen=\(store.isFullscreenRelayDay) receivedRelayDays=\(store.receivedRelayDays)")
+            #endif
             // Resume relay if user pledged but killed app before relay showed
             if pledgedToday && store.isRelayDay && !store.receivedRelayDays.contains(store.currentDays) {
                 if store.isFullscreenRelayDay {
                     showMilestoneMoment = true
                 } else {
-                    Task { await showInlineRelayMessage() }
+                    relayLoading = true
+                    Task {
+                        await showInlineRelayMessage()
+                        relayLoading = false
+                    }
                 }
             }
         }
@@ -205,10 +212,12 @@ struct TodayView: View {
 
                 // Trigger inline relay
                 if store.isRelayDay && !store.isFullscreenRelayDay {
+                    relayLoading = true
                     relayTask = Task {
                         try? await Task.sleep(nanoseconds: 1_500_000_000)
                         guard !Task.isCancelled else { return }
                         await showInlineRelayMessage()
+                        relayLoading = false
                     }
                 }
             }
@@ -237,7 +246,15 @@ struct TodayView: View {
 
     private func showInlineRelayMessage() async {
         let currentDays = store.currentDays
-        guard let relayPoint = RelayPoint.relayPoint(for: currentDays) else { return }
+        #if DEBUG
+        print("[RELAY DEBUG] showInlineRelayMessage — currentDays=\(currentDays)")
+        #endif
+        guard let relayPoint = RelayPoint.relayPoint(for: currentDays) else {
+            #if DEBUG
+            print("[RELAY DEBUG] No relay point for day \(currentDays)")
+            #endif
+            return
+        }
 
         // Determine if user can see this message
         let canSee: Bool
@@ -250,13 +267,22 @@ struct TodayView: View {
             withAnimation(.easeInOut(duration: 0.4)) {
                 showLockedRelay = true
             }
+            #if DEBUG
+            print("[RELAY DEBUG] Locked — free user on paid relay day")
+            #endif
             return
         }
 
         guard canSee else { return }
 
         // Fetch and display (skip blocked messages)
+        #if DEBUG
+        print("[RELAY DEBUG] Fetching from Supabase for day \(currentDays)...")
+        #endif
         let message = await SupabaseService.shared.fetchRelayMessage(targetDay: currentDays)
+        #if DEBUG
+        print("[RELAY DEBUG] Fetch result: \(message?.text ?? "nil")")
+        #endif
         guard let message, !store.blockedRelayMessageIDs.contains(message.id) else { return }
         inlineRelayMessage = message
         withAnimation(.easeInOut(duration: 0.4)) {
@@ -268,6 +294,11 @@ struct TodayView: View {
             store.receivedRelayDays.append(currentDays)
             store.save()
         }
+    }
+
+    private func writerLabel(for message: RelayMessage) -> String {
+        guard let writerDay = message.writerDay else { return "ahead of you" }
+        return "day \(writerDay)"
     }
 
     private func reportInlineRelay() async {

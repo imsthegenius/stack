@@ -16,6 +16,11 @@ struct MilestoneMomentView: View {
         relayPoint?.day ?? store.currentDays
     }
 
+    private var milestoneWriterLabel: String {
+        guard let writerDay = relayMessage?.writerDay else { return "ahead of you" }
+        return "day \(writerDay)"
+    }
+
     private var headerLabel: String {
         relayPoint?.label.uppercased() ?? store.currentMilestoneLabel?.uppercased() ?? ""
     }
@@ -109,11 +114,15 @@ struct MilestoneMomentView: View {
         }
     }
 
+    private var canSeeMessage: Bool {
+        store.lifetimePurchased || (relayPoint?.isFree == true)
+    }
+
     @ViewBuilder
     private var messageArea: some View {
         if isLoading {
             loadingView
-        } else if store.lifetimePurchased {
+        } else if canSeeMessage {
             if let message = relayMessage {
                 paidMessageView(message: message)
             } else {
@@ -147,7 +156,7 @@ struct MilestoneMomentView: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
 
                     HStack {
-                        Text("— someone ahead of you")
+                        Text("— from \(milestoneWriterLabel)")
                             .font(.system(size: 12, weight: .light))
                             .foregroundStyle(StackTheme.tertiaryText)
 
@@ -212,7 +221,7 @@ struct MilestoneMomentView: View {
                 .lineSpacing(9)
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("— someone ahead of you")
+            Text("— from \(milestoneWriterLabel)")
                 .font(.system(size: 12, weight: .light))
                 .foregroundStyle(StackTheme.tertiaryText)
                 .padding(.top, 12)

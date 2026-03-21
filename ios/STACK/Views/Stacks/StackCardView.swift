@@ -132,23 +132,23 @@ struct StackExportView: View {
 
             ZStack {
                 Circle()
-                    .stroke(Color(hex: "F4F2EE"), lineWidth: 1.5)
+                    .stroke(StackTheme.primaryText, lineWidth: 1.5)
                     .frame(width: 128, height: 128)
 
                 Text(Milestone.shortLabel(for: milestoneDays))
                     .font(.system(size: 54, weight: .light))
-                    .foregroundStyle(Color(hex: "F4F2EE"))
+                    .foregroundStyle(StackTheme.primaryText)
             }
 
             Text((Milestone.label(for: milestoneDays) ?? "").uppercased())
                 .font(.system(size: 22, weight: .light))
                 .tracking(2)
-                .foregroundStyle(Color(hex: "F4F2EE"))
+                .foregroundStyle(StackTheme.primaryText)
                 .padding(.top, 28)
 
             Text("One at a time.")
                 .font(.system(size: 15, weight: .light))
-                .foregroundStyle(Color(hex: "8C8880"))
+                .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 12)
 
             Spacer()
@@ -156,11 +156,11 @@ struct StackExportView: View {
             Text("STACK")
                 .font(.system(size: 11, weight: .light))
                 .tracking(2)
-                .foregroundStyle(Color(hex: "4A4845"))
+                .foregroundStyle(StackTheme.tertiaryText)
                 .padding(.bottom, 24)
         }
         .frame(width: 390, height: 500)
-        .background(Color(hex: "0C0B09"))
+        .background(StackTheme.background)
     }
 }
 

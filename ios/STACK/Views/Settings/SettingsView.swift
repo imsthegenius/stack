@@ -201,6 +201,10 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 28)
                     .padding(.vertical, 16)
+
+                    #if DEBUG
+                    debugSection
+                    #endif
                 }
                 .padding(.top, 8)
             }
@@ -280,6 +284,51 @@ struct SettingsView: View {
             // Restore failed silently
         }
     }
+
+    #if DEBUG
+    @State private var debugDay: Int = 1
+    private let debugRelayDays = [1, 2, 3, 7, 14, 30, 60, 90, 180, 365, 1000]
+
+    private var debugSection: some View {
+        VStack(spacing: 0) {
+            sectionHeader("DEBUG (stripped from release)")
+                .padding(.top, 24)
+
+            HStack {
+                Text("Jump to day")
+                    .font(.system(size: 16, weight: .light))
+                    .foregroundStyle(StackTheme.primaryText)
+                Spacer()
+                Picker("Day", selection: $debugDay) {
+                    ForEach(debugRelayDays, id: \.self) { day in
+                        Text("\(day)").tag(day)
+                    }
+                }
+                .tint(StackTheme.secondaryText)
+            }
+            .padding(.horizontal, 28)
+            .padding(.vertical, 12)
+
+            Button {
+                guard let chapter = store.currentChapter,
+                      let index = store.chapters.firstIndex(where: { $0.id == chapter.id }) else { return }
+                let newStart = Calendar.current.date(byAdding: .day, value: -debugDay, to: Calendar.current.startOfDay(for: Date()))!
+                store.chapters[index] = Chapter(id: chapter.id, startDate: newStart, endDate: chapter.endDate, chapterNumber: chapter.chapterNumber)
+                store.todayPledgeDate = nil
+                store.receivedRelayDays = []
+                store.save()
+            } label: {
+                Text("Set day to \(debugDay) & reset pledge")
+                    .font(.system(size: 14, weight: .light))
+                    .foregroundStyle(StackTheme.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 12)
+            }
+
+            StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+        }
+    }
+    #endif
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)

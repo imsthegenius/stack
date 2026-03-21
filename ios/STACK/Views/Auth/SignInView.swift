@@ -53,14 +53,16 @@ struct SignInView: View {
                             .foregroundStyle(StackTheme.tertiaryText)
                     }
 
+                    #if DEBUG
                     Button {
                         AuthService.shared.skipSignIn()
                     } label: {
-                        Text("Continue without account")
+                        Text("Skip (DEBUG only)")
                             .font(.system(size: 14, weight: .light))
                             .foregroundStyle(StackTheme.tertiaryText)
                     }
                     .padding(.top, 8)
+                    #endif
                 }
                 .padding(.horizontal, 28)
                 .padding(.bottom, 60)
