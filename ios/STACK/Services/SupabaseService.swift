@@ -17,7 +17,6 @@ class SupabaseService {
     // MARK: - Fetch (v2)
 
     func fetchRelayMessage(targetDay: Int) async -> RelayMessage? {
-        guard Self.supabaseAnonKey != "REPLACE_WITH_SUPABASE_ANON_KEY" else { return nil }
         guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/relay_messages?target_day=eq.\(targetDay)&is_active=eq.true&order=created_at.desc&limit=10") else {
             return nil
         }
@@ -49,9 +48,6 @@ class SupabaseService {
     // MARK: - Submit (v2)
 
     func submitRelayMessage(text: String, targetDay: Int, writerDay: Int) async throws {
-        guard Self.supabaseAnonKey != "REPLACE_WITH_SUPABASE_ANON_KEY" else {
-            throw URLError(.userAuthenticationRequired)
-        }
         guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/relay_messages") else {
             throw URLError(.badURL)
         }
