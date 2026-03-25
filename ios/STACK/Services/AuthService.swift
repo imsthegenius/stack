@@ -21,6 +21,7 @@ class AuthService {
     private static let refreshTokenKey = "com.twohundred.stack.refresh_token"
     private static let userIdKey = "com.twohundred.stack.user_id"
     private static let emailKey = "com.twohundred.stack.email"
+    private static let appleAuthCodeKey = "com.twohundred.stack.apple_auth_code"
 
     private init() {
         loadFromKeychain()
@@ -141,6 +142,12 @@ class AuthService {
         signOutLocally()
     }
 
+    // MARK: - Apple Auth Code (for token revocation)
+
+    func storeAppleAuthCode(_ code: String) {
+        KeychainHelper.save(key: Self.appleAuthCodeKey, string: code)
+    }
+
     // MARK: - Delete Account
 
     func deleteAccount() async -> Bool {
@@ -153,6 +160,13 @@ class AuthService {
         request.setValue(SupabaseService.supabaseAnonKey, forHTTPHeaderField: "apikey")
         request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        // Send Apple auth code for token revocation
+        let appleAuthCode = KeychainHelper.loadString(key: Self.appleAuthCodeKey)
+        if let code = appleAuthCode {
+            let body = ["apple_auth_code": code]
+            request.httpBody = try? JSONSerialization.data(withJSONObject: body)
+        }
 
         do {
             let (_, response) = try await URLSession.shared.data(for: request)
@@ -234,6 +248,7 @@ class AuthService {
         KeychainHelper.delete(key: Self.refreshTokenKey)
         KeychainHelper.delete(key: Self.userIdKey)
         KeychainHelper.delete(key: Self.emailKey)
+        KeychainHelper.delete(key: Self.appleAuthCodeKey)
     }
 
     private func clearAllData() {

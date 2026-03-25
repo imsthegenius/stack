@@ -81,6 +81,12 @@ struct SignInView: View {
                 return
             }
 
+            // Store Apple authorization code for token revocation on account deletion
+            if let codeData = credential.authorizationCode,
+               let code = String(data: codeData, encoding: .utf8) {
+                AuthService.shared.storeAppleAuthCode(code)
+            }
+
             isProcessing = true
             errorMessage = nil
 
