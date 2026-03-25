@@ -24,17 +24,34 @@ class SupabaseService {
         var request = URLRequest(url: url)
         request.httpMethod = "GET"
         applyHeaders(to: &request)
+        request.setValue("application/json", forHTTPHeaderField: "Accept")
 
         do {
             let (data, response) = try await session.data(for: request)
             guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                #if DEBUG
+                let code = (response as? HTTPURLResponse)?.statusCode ?? -1
+                print("[RELAY FETCH] HTTP error: \(code)")
+                #endif
                 return nil
             }
 
+            #if DEBUG
+            if let raw = String(data: data.prefix(500), encoding: .utf8) {
+                print("[RELAY FETCH] Raw response (\(data.count) bytes): \(raw)")
+            }
+            #endif
+
             let decoder = makeDecoder()
             let messages = try decoder.decode([RelayMessage].self, from: data)
+            #if DEBUG
+            print("[RELAY FETCH] Decoded \(messages.count) messages for day \(targetDay)")
+            #endif
             return messages.randomElement()
         } catch {
+            #if DEBUG
+            print("[RELAY FETCH] Error for day \(targetDay): \(error)")
+            #endif
             return nil
         }
     }
@@ -185,7 +202,25 @@ class SupabaseService {
 
     private func makeDecoder() -> JSONDecoder {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .iso8601
+        // Supabase returns ISO 8601 timestamps with fractional seconds
+        // (e.g. "2026-03-21T16:31:14.908308+00:00"). The built-in .iso8601
+        // strategy does not reliably parse fractional seconds on all iOS
+        // versions, which causes the entire decode to throw — even for
+        // optional Date? fields — because the key IS present in the JSON.
+        let isoWithFrac = ISO8601DateFormatter()
+        isoWithFrac.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+        let isoPlain = ISO8601DateFormatter()
+        isoPlain.formatOptions = [.withInternetDateTime]
+        decoder.dateDecodingStrategy = .custom { decoder in
+            let container = try decoder.singleValueContainer()
+            let string = try container.decode(String.self)
+            if let date = isoWithFrac.date(from: string) { return date }
+            if let date = isoPlain.date(from: string) { return date }
+            throw DecodingError.dataCorruptedError(
+                in: container,
+                debugDescription: "Cannot parse date: \(string)"
+            )
+        }
         return decoder
     }
 }

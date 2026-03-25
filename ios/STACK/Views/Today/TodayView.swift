@@ -53,7 +53,7 @@ struct TodayView: View {
                 }
 
                 if pledgedToday {
-                    Text("Locked in.")
+                    Text("Stacked.")
                         .font(.system(size: 13, weight: .light))
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(.top, 20)
@@ -131,6 +131,14 @@ struct TodayView: View {
         }
         .onAppear {
             pledgedToday = store.hasPledgedToday
+            // Reset inline relay state when returning to this tab (e.g. after debug day picker)
+            if !pledgedToday {
+                showInlineRelay = false
+                inlineRelayMessage = nil
+                showLockedRelay = false
+                relayLoading = false
+                inlineRelayReported = false
+            }
             #if DEBUG
             print("[RELAY DEBUG] onAppear — currentDays=\(store.currentDays) pledgedToday=\(pledgedToday) isRelayDay=\(store.isRelayDay) isFullscreen=\(store.isFullscreenRelayDay) receivedRelayDays=\(store.receivedRelayDays)")
             #endif
@@ -244,6 +252,7 @@ struct TodayView: View {
         }
     }
 
+    @MainActor
     private func showInlineRelayMessage() async {
         let currentDays = store.currentDays
         #if DEBUG
@@ -301,6 +310,7 @@ struct TodayView: View {
         return "day \(writerDay)"
     }
 
+    @MainActor
     private func reportInlineRelay() async {
         guard let message = inlineRelayMessage else { return }
         try? await SupabaseService.shared.reportRelayMessage(id: message.id)

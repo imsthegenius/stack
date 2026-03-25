@@ -316,6 +316,7 @@ struct SettingsView: View {
                 store.chapters[index] = Chapter(id: chapter.id, startDate: newStart, endDate: chapter.endDate, chapterNumber: chapter.chapterNumber)
                 store.todayPledgeDate = nil
                 store.receivedRelayDays = []
+                store.blockedRelayMessageIDs = []
                 store.save()
             } label: {
                 Text("Set day to \(debugDay) & reset pledge")
@@ -324,6 +325,20 @@ struct SettingsView: View {
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
             }
+
+            StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+
+            Toggle(isOn: Binding(
+                get: { store.lifetimePurchased },
+                set: { store.lifetimePurchased = $0; store.save() }
+            )) {
+                Text("Force paid (screenshots)")
+                    .font(.system(size: 16, weight: .light))
+                    .foregroundStyle(StackTheme.primaryText)
+            }
+            .tint(Color(hex: "C8A96E"))
+            .padding(.horizontal, 28)
+            .padding(.vertical, 12)
 
             StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
         }
