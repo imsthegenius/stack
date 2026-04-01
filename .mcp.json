@@ -6,6 +6,12 @@
       "headers": {
         "Authorization": "Bearer ${RC_API_V2_SECRET_KEY}"
       }
+    },
+    "codex": {
+      "command": "codex",
+      "args": [
+        "mcp-server"
+      ]
     }
   }
 }
