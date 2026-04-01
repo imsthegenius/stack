@@ -53,6 +53,14 @@ enum StackAnimation {
     static let stagger: Double = 0.08
 }
 
+struct PressScaleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
+            .animation(StackAnimation.press, value: configuration.isPressed)
+    }
+}
+
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)

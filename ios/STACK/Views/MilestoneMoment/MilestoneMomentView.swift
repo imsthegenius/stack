@@ -211,7 +211,7 @@ struct MilestoneMomentView: View {
             if !reportedMessage {
                 Text("Tap to leave one for the next person →")
                     .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(StackTheme.tertiaryText)
+                    .foregroundStyle(StackTheme.secondaryText)
                     .padding(.top, 12)
             }
         }

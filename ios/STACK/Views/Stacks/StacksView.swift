@@ -5,6 +5,8 @@ struct StacksView: View {
     @State private var selectedMilestone: Int?
     @AppStorage("lastSeenEarnedMilestone") private var lastSeenEarnedMilestone: Int = 0
     @State private var newlyEarnedMilestone: Int? = nil
+    @State private var listAppeared: Bool = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         NavigationStack {
@@ -18,16 +20,16 @@ struct StacksView: View {
                     .padding(.bottom, 8)
 
                 LazyVStack(spacing: 0) {
-                    ForEach(Milestone.allDays, id: \.self) { days in
+                    ForEach(Array(Milestone.allDays.enumerated()), id: \.element) { index, days in
                         let earned = store.currentDays >= days
                         if earned {
                             Button {
                                 selectedMilestone = days
                             } label: {
-                                earnedRow(days: days)
+                                earnedRow(days: days, index: index)
                             }
                         } else {
-                            lockedRow(days: days)
+                            lockedRow(days: days, index: index)
                         }
 
                         if days != Milestone.allDays.last {
@@ -47,6 +49,7 @@ struct StacksView: View {
                 StackCardView(store: store, milestoneDays: days)
             }
             .onAppear {
+                listAppeared = true
                 // Detect if a new milestone was earned since last visit
                 let currentDays = store.currentDays
                 if currentDays > lastSeenEarnedMilestone {
@@ -66,7 +69,7 @@ struct StacksView: View {
         }
     }
 
-    private func earnedRow(days: Int) -> some View {
+    private func earnedRow(days: Int, index: Int) -> some View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
@@ -94,7 +97,7 @@ struct StacksView: View {
 
                     if !store.receivedRelayDays.contains(days) {
                         Circle()
-                            .fill(StackTheme.primaryText)
+                            .fill(Color(hex: "C8A96E"))
                             .frame(width: 4, height: 4)
                     }
                 }
@@ -115,9 +118,15 @@ struct StacksView: View {
         .padding(.horizontal, 28)
         .padding(.vertical, 16)
         .contentShape(Rectangle())
+        .opacity(listAppeared ? 1.0 : 0.0)
+        .offset(y: listAppeared ? 0 : 6)
+        .animation(
+            reduceMotion ? nil : .easeOut(duration: 0.35).delay(Double(index) * StackAnimation.stagger),
+            value: listAppeared
+        )
     }
 
-    private func lockedRow(days: Int) -> some View {
+    private func lockedRow(days: Int, index: Int) -> some View {
         HStack(spacing: 16) {
             Circle()
                 .stroke(StackTheme.ghost, lineWidth: 1.5)
@@ -139,6 +148,12 @@ struct StacksView: View {
         .padding(.horizontal, 28)
         .padding(.vertical, 16)
         .allowsHitTesting(false)
+        .opacity(listAppeared ? 1.0 : 0.0)
+        .offset(y: listAppeared ? 0 : 6)
+        .animation(
+            reduceMotion ? nil : .easeOut(duration: 0.35).delay(Double(index) * StackAnimation.stagger),
+            value: listAppeared
+        )
     }
 }
 

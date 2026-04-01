@@ -16,17 +16,18 @@ struct JourneyView: View {
                         .padding(.top, 16)
                         .padding(.bottom, 12)
 
-                    ForEach(store.sortedChapters) { chapter in
-                        if chapter.isCurrentChapter {
-                            currentChapterRow(chapter)
-                        } else {
-                            pastChapterRow(chapter)
-                        }
+                    let chapters = store.sortedChapters
+                    ForEach(Array(chapters.enumerated()), id: \.element.id) { index, chapter in
+                        HStack(alignment: .top, spacing: 0) {
+                            timelineColumn(isCurrentChapter: chapter.isCurrentChapter, isLast: index == chapters.count - 1)
 
-                        if chapter.id != store.sortedChapters.last?.id {
-                            StackTheme.separator
-                                .frame(height: 0.5)
-                                .padding(.horizontal, 28)
+                            Group {
+                                if chapter.isCurrentChapter {
+                                    currentChapterContent(chapter)
+                                } else {
+                                    pastChapterContent(chapter)
+                                }
+                            }
                         }
                     }
 
@@ -41,18 +42,24 @@ struct JourneyView: View {
                                 .foregroundStyle(StackTheme.tertiaryText)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.horizontal, 28)
                     .padding(.top, 32)
 
                     Button {
                         showNewChapterConfirm = true
                     } label: {
                         Text("Start new chapter")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .font(.system(size: 15, weight: .regular))
+                            .foregroundStyle(StackTheme.primaryText)
+                            .frame(maxWidth: .infinity)
                             .padding(.vertical, 14)
-                            .contentShape(Rectangle())
+                            .background(StackTheme.ghost)
+                            .clipShape(.rect(cornerRadius: 10))
                     }
-                    .padding(.top, 40)
+                    .buttonStyle(PressScaleButtonStyle())
+                    .padding(.horizontal, 28)
+                    .padding(.top, 20)
                     .padding(.bottom, 32)
                 }
                 .padding(.top, 8)
@@ -80,7 +87,23 @@ struct JourneyView: View {
         (store.currentChapter?.chapterNumber ?? 0) + 1
     }
 
-    private func currentChapterRow(_ chapter: Chapter) -> some View {
+    private func timelineColumn(isCurrentChapter: Bool, isLast: Bool) -> some View {
+        VStack(alignment: .center, spacing: 0) {
+            Spacer().frame(height: 12)
+            Circle()
+                .fill(isCurrentChapter ? StackTheme.tertiaryText : StackTheme.ghost)
+                .frame(width: 5, height: 5)
+            if !isLast {
+                Rectangle()
+                    .fill(StackTheme.separator)
+                    .frame(width: 1)
+                    .frame(maxHeight: .infinity)
+            }
+        }
+        .frame(width: 28)
+    }
+
+    private func currentChapterContent(_ chapter: Chapter) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("CHAPTER \(chapter.chapterNumber)")
                 .font(.system(size: 12, weight: .regular))
@@ -102,11 +125,11 @@ struct JourneyView: View {
                 .foregroundStyle(StackTheme.tertiaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 28)
+        .padding(.trailing, 28)
         .padding(.vertical, 20)
     }
 
-    private func pastChapterRow(_ chapter: Chapter) -> some View {
+    private func pastChapterContent(_ chapter: Chapter) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("CHAPTER \(chapter.chapterNumber)")
                 .font(.system(size: 12, weight: .regular))
@@ -130,7 +153,7 @@ struct JourneyView: View {
                 .foregroundStyle(StackTheme.tertiaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 28)
+        .padding(.trailing, 28)
         .padding(.vertical, 16)
     }
 }

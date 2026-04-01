@@ -92,6 +92,7 @@ struct PaywallView: View {
                         .clipShape(.rect(cornerRadius: 12))
                         .opacity(buttonDisabled && !loadFailed ? 0.4 : 1.0)
                     }
+                    .buttonStyle(PressScaleButtonStyle())
                     .disabled(buttonDisabled && !loadFailed)
 
                     Button {

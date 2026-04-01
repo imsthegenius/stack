@@ -65,7 +65,7 @@ struct RelayWriteView: View {
                 .clipShape(RoundedRectangle(cornerRadius: 8))
                 .padding(.horizontal, 28)
                 .padding(.top, 24)
-                .frame(minHeight: 160)
+                .frame(minHeight: 200)
                 .opacity(sentForward ? 0.3 : 1.0)
                 .animation(reduceMotion ? .none : .easeOut(duration: 0.3), value: sentForward)
 
