@@ -1,4 +1,5 @@
 @~/Desktop/second-brain/rules/brain-sync-rule.md
+@~/Desktop/second-brain/rules/linear-workflow-rule.md
 # STACK — Repo Rules
 
 ## Bundle IDs
@@ -33,8 +34,8 @@ supabase/
 ```
 Background:    #0C0B09  — Color(hex: "0C0B09") — everywhere, flat, no gradient
 Primary text:  #F4F2EE  — StackTheme.primaryText
-Secondary:     #8C8880  — StackTheme.secondaryText
-Tertiary:      #4A4845  — StackTheme.tertiaryText
+Secondary:     #A09890  — StackTheme.secondaryText
+Tertiary:      #8A857F  — StackTheme.tertiaryText
 Ghost:         #2E2C2A  — StackTheme.ghost
 Stack gold:    #C8A96E  — chip circles + earned chip borders ONLY
 Milestone:     #FFFFFF  — Color.white — counter on milestone day ONLY
@@ -43,10 +44,11 @@ Separator:     #1C1B19  — StackTheme.separator
 
 ## Typography Rules (NO EXCEPTIONS)
 - `SF Pro Thin` — hero counter (88pt) ONLY
-- `SF Pro Light` — EVERYTHING ELSE
+- `SF Pro Light` — 18pt and above (titles, headers, display text)
+- `SF Pro Regular` — 17pt and below (body text, labels, buttons, legal, section headers)
 - `Georgia regular` — relay message text ONLY: `Font.custom("Georgia", size: 19)`
-- FORBIDDEN: `.regular`, `.medium`, `.bold` anywhere in the app
-- FORBIDDEN: `Text("...").fontWeight(.regular)` or `.fontWeight(.bold)`
+- FORBIDDEN: `.medium`, `.bold`, `.semibold`, `.heavy`, `.black` anywhere in the app
+- FORBIDDEN: `Text("...").fontWeight(.bold)` or any weight heavier than `.regular`
 
 ## Key Mechanics
 
@@ -110,7 +112,7 @@ Separator:     #1C1B19  — StackTheme.separator
 - No confetti, particle effects, or celebration animations
 - No "You're amazing!" or wellness copy
 - No push notifications of any kind
-- No SF Pro Regular or Bold
+- No SF Pro Medium, Bold, Semibold, Heavy, or Black
 - No gradients
 - No #C8A96E gold on the counter number (only on chip circles)
 - No rounded card backgrounds in lists

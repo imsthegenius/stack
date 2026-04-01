@@ -68,7 +68,7 @@ INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
 -- Voice: Noticing, adjusting. 2-4 sentences.
 -- ============================================================
 INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
-(7, 30, 'The first week felt like a physical illness. It was.', true),
+(7, 30, 'The first week, my body pushed back. Everything felt off. That eased.', true),
 (7, 30, 'I didn''t know what to do with my hands for seven days. That passed.', true),
 (7, 30, 'I slept worse every night until about day five. Then I slept better than I had in years.', true),
 (7, 30, 'I told nobody. Carried it alone the whole week. That was fine. It still counted.', true),
@@ -104,7 +104,7 @@ INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
 -- Day 30 — One Month (4 seeds, existing retagged + fixed)
 -- ============================================================
 INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
-(30, 90, 'The social stuff was harder than the cravings. Finding reasons not to go, then going anyway, then standing there.', true),
+(30, 90, 'The social stuff was harder than I expected. Finding reasons not to go, then going anyway, then standing there.', true),
 (30, 90, 'I stopped waiting to feel like a different person. I''m the same person. Just without the thing.', true),
 (30, 90, 'The first month I tracked every single day. Checked the counter constantly. That obsession faded.', true),
 (30, 90, 'Someone asked why I wasn''t. I said I just wasn''t. They moved on. That was it.', true);
@@ -123,14 +123,14 @@ INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
 INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
 (60, 180, 'Two months felt like crossing some invisible line. Nothing dramatic. Just two months.', true),
 (60, 180, 'I started noticing things I''d stopped noticing. Early mornings. What I actually wanted to eat.', true),
-(60, 180, 'The cravings don''t disappear. They just get quieter and shorter.', true);
+(60, 180, 'The pull doesn''t disappear. It just gets quieter and shorter.', true);
 
 -- ============================================================
 -- Day 90 — Three Months (4 seeds, existing retagged)
 -- ============================================================
 INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
 (90, 180, 'Three months was the first goal I set. When I got here I set another one.', true),
-(90, 180, 'I spent the first 90 days white-knuckling it. Around here I stopped needing to.', true),
+(90, 180, 'I spent the first 90 days holding on. Around here I stopped needing to.', true),
 (90, 180, 'My thinking got cleaner. I didn''t notice until I looked back and couldn''t remember the last time I''d spiraled.', true),
 (90, 180, 'Someone who knew me before told me I seemed different. I didn''t explain. I just said thanks.', true);
 
@@ -139,7 +139,7 @@ INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
 -- ============================================================
 INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
 (120, 270, 'Four months. I started forgetting to check the counter. When I did check, the number surprised me.', true),
-(120, 270, 'The hard part at four months isn''t the cravings. It''s the boredom. Learning to sit in ordinary time.', true),
+(120, 270, 'The hard part at four months was the boredom. Learning to sit in ordinary time.', true),
 (120, 270, 'I looked at someone struggling with it and remembered what that felt like. I didn''t say anything. I just remembered.', true);
 
 -- ============================================================
@@ -147,7 +147,7 @@ INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
 -- ============================================================
 INSERT INTO relay_messages (target_day, writer_day, text, is_seed) VALUES
 (150, 365, 'Halfway to a year. I did the math and sat with it for a minute.', true),
-(150, 365, 'Five months in and the identity thing started to shift. I stopped being someone who was quitting and started being someone who just doesn''t.', true),
+(150, 365, 'Five months in and the identity thing started to shift. I stopped being someone who was working on it and started being someone who just is.', true),
 (150, 365, 'I had a dream about it around here. Woke up guilty. Then relieved. Then annoyed that I was still thinking about it.', true);
 
 -- ============================================================

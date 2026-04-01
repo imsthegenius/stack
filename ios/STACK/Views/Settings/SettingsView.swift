@@ -33,7 +33,7 @@ struct SettingsView: View {
                     } label: {
                         settingsRow(title: "Add to lock screen", trailing: {
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .light))
+                                .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(StackTheme.tertiaryText)
                         })
                     }
@@ -52,7 +52,7 @@ struct SettingsView: View {
                             settingsRow(title: "Unlock STACK", trailing: {
                                 if !priceString.isEmpty {
                                     Text("· \(priceString)")
-                                        .font(.system(size: 14, weight: .light))
+                                        .font(.system(size: 14, weight: .regular))
                                         .foregroundStyle(StackTheme.tertiaryText)
                                 }
                             })
@@ -65,7 +65,7 @@ struct SettingsView: View {
                         } label: {
                             HStack {
                                 Text("Restore purchases")
-                                    .font(.system(size: 14, weight: .light))
+                                    .font(.system(size: 14, weight: .regular))
                                     .foregroundStyle(StackTheme.tertiaryText)
                                 Spacer()
                                 if isRestoring {
@@ -88,7 +88,7 @@ struct SettingsView: View {
                     } label: {
                         settingsRow(title: "Start New Chapter", trailing: {
                             Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .light))
+                                .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(StackTheme.tertiaryText)
                         })
                     }
@@ -117,12 +117,12 @@ struct SettingsView: View {
                         } label: {
                             HStack {
                                 Text("Delete Account")
-                                    .font(.system(size: 16, weight: .light))
-                                    .foregroundStyle(.red.opacity(0.8))
+                                    .font(.system(size: 16, weight: .regular))
+                                    .foregroundStyle(StackTheme.destructive)
                                 Spacer()
                                 if isDeletingAccount {
                                     ProgressView()
-                                        .tint(.red.opacity(0.5))
+                                        .tint(StackTheme.destructiveMuted)
                                         .scaleEffect(0.75)
                                 }
                             }
@@ -137,7 +137,7 @@ struct SettingsView: View {
                         } label: {
                             settingsRow(title: "Sign in with Apple", trailing: {
                                 Image(systemName: "apple.logo")
-                                    .font(.system(size: 14, weight: .light))
+                                    .font(.system(size: 14, weight: .regular))
                                     .foregroundStyle(StackTheme.secondaryText)
                             })
                         }
@@ -151,7 +151,7 @@ struct SettingsView: View {
                     Link(destination: URL(string: "https://stack.twohundred.ai/privacy.html")!) {
                         settingsRow(title: "Privacy Policy", trailing: {
                             Image(systemName: "arrow.up.right")
-                                .font(.system(size: 10, weight: .light))
+                                .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(StackTheme.tertiaryText)
                         })
                     }
@@ -161,7 +161,7 @@ struct SettingsView: View {
                     Link(destination: URL(string: "https://stack.twohundred.ai/terms.html")!) {
                         settingsRow(title: "Terms of Use", trailing: {
                             Image(systemName: "arrow.up.right")
-                                .font(.system(size: 10, weight: .light))
+                                .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(StackTheme.tertiaryText)
                         })
                     }
@@ -171,7 +171,7 @@ struct SettingsView: View {
                     Link(destination: URL(string: "mailto:hello@twohundred.ai")!) {
                         settingsRow(title: "Contact Support", trailing: {
                             Image(systemName: "envelope")
-                                .font(.system(size: 12, weight: .light))
+                                .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(StackTheme.tertiaryText)
                         })
                     }
@@ -184,18 +184,18 @@ struct SettingsView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                             Text("Version \(version)")
-                                .font(.system(size: 13, weight: .light))
+                                .font(.system(size: 13, weight: .regular))
                                 .foregroundStyle(StackTheme.secondaryText)
                         }
 
                         Text("No notifications. No streaks. No social.")
-                            .font(.system(size: 13, weight: .light))
+                            .font(.system(size: 13, weight: .regular))
                             .foregroundStyle(StackTheme.secondaryText)
 
                         Text(auth.isSignedIn
                              ? "Your data is backed up when signed in."
                              : "Sign in to back up your progress across devices.")
-                            .font(.system(size: 12, weight: .light))
+                            .font(.system(size: 12, weight: .regular))
                             .foregroundStyle(StackTheme.tertiaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -296,7 +296,7 @@ struct SettingsView: View {
 
             HStack {
                 Text("Jump to day")
-                    .font(.system(size: 16, weight: .light))
+                    .font(.system(size: 16, weight: .regular))
                     .foregroundStyle(StackTheme.primaryText)
                 Spacer()
                 Picker("Day", selection: $debugDay) {
@@ -320,7 +320,7 @@ struct SettingsView: View {
                 store.save()
             } label: {
                 Text("Set day to \(debugDay) & reset pledge")
-                    .font(.system(size: 14, weight: .light))
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 12)
@@ -333,7 +333,7 @@ struct SettingsView: View {
                 set: { store.lifetimePurchased = $0; store.save() }
             )) {
                 Text("Force paid (screenshots)")
-                    .font(.system(size: 16, weight: .light))
+                    .font(.system(size: 16, weight: .regular))
                     .foregroundStyle(StackTheme.primaryText)
             }
             .tint(Color(hex: "C8A96E"))
@@ -347,9 +347,9 @@ struct SettingsView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 11, weight: .light))
+            .font(.system(size: 12, weight: .regular))
             .tracking(1.5)
-            .foregroundStyle(StackTheme.tertiaryText)
+            .foregroundStyle(StackTheme.secondaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 28)
             .padding(.top, 16)
@@ -359,7 +359,7 @@ struct SettingsView: View {
     private func settingsRow<Trailing: View>(title: String, @ViewBuilder trailing: () -> Trailing) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 16, weight: .light))
+                .font(.system(size: 16, weight: .regular))
                 .foregroundStyle(StackTheme.primaryText)
             Spacer()
             trailing()
@@ -393,7 +393,7 @@ struct WidgetInstructionsSheet: View {
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Done") { dismiss() }
-                        .font(.system(size: 16, weight: .light))
+                        .font(.system(size: 16, weight: .regular))
                         .foregroundStyle(StackTheme.secondaryText)
                 }
             }
@@ -407,12 +407,12 @@ struct WidgetInstructionsSheet: View {
                     .stroke(StackTheme.ghost, lineWidth: 1)
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
-                    .font(.system(size: 14, weight: .light))
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
             }
 
             Text(text)
-                .font(.system(size: 15, weight: .light))
+                .font(.system(size: 15, weight: .regular))
                 .foregroundStyle(StackTheme.primaryText)
         }
     }

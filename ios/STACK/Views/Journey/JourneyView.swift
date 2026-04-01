@@ -32,12 +32,12 @@ struct JourneyView: View {
 
                     VStack(spacing: 4) {
                         Text("\(store.totalDays) days stacked")
-                            .font(.system(size: 15, weight: .light))
+                            .font(.system(size: 15, weight: .regular))
                             .foregroundStyle(StackTheme.secondaryText)
 
                         if store.chapters.count > 1 {
                             Text("Across \(store.chapters.count) chapters")
-                                .font(.system(size: 12, weight: .light))
+                                .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(StackTheme.tertiaryText)
                         }
                     }
@@ -47,7 +47,7 @@ struct JourneyView: View {
                         showNewChapterConfirm = true
                     } label: {
                         Text("Start new chapter")
-                            .font(.system(size: 14, weight: .light))
+                            .font(.system(size: 14, weight: .regular))
                             .foregroundStyle(StackTheme.tertiaryText)
                             .padding(.vertical, 14)
                             .contentShape(Rectangle())
@@ -83,9 +83,9 @@ struct JourneyView: View {
     private func currentChapterRow(_ chapter: Chapter) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("CHAPTER \(chapter.chapterNumber)")
-                .font(.system(size: 11, weight: .light))
+                .font(.system(size: 12, weight: .regular))
                 .tracking(1.5)
-                .foregroundStyle(StackTheme.tertiaryText)
+                .foregroundStyle(StackTheme.secondaryText)
 
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 Text("\(chapter.daysCount)")
@@ -93,12 +93,12 @@ struct JourneyView: View {
                     .foregroundStyle(StackTheme.primaryText)
 
                 Text("days")
-                    .font(.system(size: 14, weight: .light))
+                    .font(.system(size: 14, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
             }
 
             Text("Since \(StackDateFormatter.string(from: chapter.startDate))")
-                .font(.system(size: 12, weight: .light))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundStyle(StackTheme.tertiaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -109,9 +109,9 @@ struct JourneyView: View {
     private func pastChapterRow(_ chapter: Chapter) -> some View {
         VStack(alignment: .leading, spacing: 4) {
             Text("CHAPTER \(chapter.chapterNumber)")
-                .font(.system(size: 11, weight: .light))
+                .font(.system(size: 12, weight: .regular))
                 .tracking(1.5)
-                .foregroundStyle(StackTheme.tertiaryText)
+                .foregroundStyle(StackTheme.secondaryText)
 
             HStack(alignment: .lastTextBaseline, spacing: 4) {
                 Text("\(chapter.daysCount)")
@@ -119,14 +119,14 @@ struct JourneyView: View {
                     .foregroundStyle(StackTheme.secondaryText)
 
                 Text("days")
-                    .font(.system(size: 13, weight: .light))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(StackTheme.tertiaryText)
             }
 
             let startFormatted = StackDateFormatter.string(from: chapter.startDate)
             let endFormatted = chapter.endDate.map { StackDateFormatter.string(from: $0) } ?? ""
             Text("\(startFormatted) – \(endFormatted)")
-                .font(.system(size: 12, weight: .light))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundStyle(StackTheme.tertiaryText)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

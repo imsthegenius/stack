@@ -20,7 +20,7 @@ struct StackCardView: View {
                 HStack {
                     Spacer()
                     Button("Done") { dismiss() }
-                        .font(.system(size: 16, weight: .light))
+                        .font(.system(size: 16, weight: .regular))
                         .foregroundStyle(StackTheme.secondaryText)
                 }
                 .padding(.horizontal, 28)
@@ -38,18 +38,18 @@ struct StackCardView: View {
                     .padding(.top, 28)
 
                 Text("One at a time.")
-                    .font(.system(size: 15, weight: .light))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                     .padding(.top, 12)
 
                 if let info = store.earnedDate(for: milestoneDays) {
                     VStack(spacing: 4) {
                         Text("Since \(StackDateFormatter.string(from: info.chapter.startDate))")
-                            .font(.system(size: 12, weight: .light))
+                            .font(.system(size: 12, weight: .regular))
                             .foregroundStyle(StackTheme.tertiaryText)
 
                         Text("CHAPTER \(info.chapter.chapterNumber)")
-                            .font(.system(size: 11, weight: .light))
+                            .font(.system(size: 12, weight: .regular))
                             .tracking(1.5)
                             .foregroundStyle(StackTheme.tertiaryText)
                     }
@@ -66,9 +66,9 @@ struct StackCardView: View {
                         } label: {
                             HStack(spacing: 6) {
                                 Image(systemName: "envelope")
-                                    .font(.system(size: 14, weight: .light))
+                                    .font(.system(size: 14, weight: .regular))
                                 Text("Read the relay")
-                                    .font(.system(size: 14, weight: .light))
+                                    .font(.system(size: 14, weight: .regular))
                             }
                             .foregroundStyle(StackTheme.secondaryText)
                         }
@@ -79,9 +79,9 @@ struct StackCardView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 16, weight: .light))
+                                .font(.system(size: 16, weight: .regular))
                             Text("Share")
-                                .font(.system(size: 14, weight: .light))
+                                .font(.system(size: 14, weight: .regular))
                         }
                         .foregroundStyle(StackTheme.secondaryText)
                     }
@@ -147,14 +147,14 @@ struct StackExportView: View {
                 .padding(.top, 28)
 
             Text("One at a time.")
-                .font(.system(size: 15, weight: .light))
+                .font(.system(size: 15, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 12)
 
             Spacer()
 
             Text("STACK")
-                .font(.system(size: 11, weight: .light))
+                .font(.system(size: 12, weight: .regular))
                 .tracking(2)
                 .foregroundStyle(StackTheme.tertiaryText)
                 .padding(.bottom, 24)

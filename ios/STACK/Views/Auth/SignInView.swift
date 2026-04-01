@@ -20,7 +20,7 @@ struct SignInView: View {
                         .foregroundStyle(StackTheme.primaryText)
 
                     Text("Sign in so your days survive phone switches, reinstalls, and upgrades.")
-                        .font(.system(size: 17, weight: .light))
+                        .font(.system(size: 17, weight: .regular))
                         .foregroundStyle(StackTheme.secondaryText)
                         .padding(.top, 24)
                 }
@@ -49,7 +49,7 @@ struct SignInView: View {
 
                     if let error = errorMessage {
                         Text(error)
-                            .font(.system(size: 13, weight: .light))
+                            .font(.system(size: 13, weight: .regular))
                             .foregroundStyle(StackTheme.tertiaryText)
                     }
 
@@ -58,7 +58,7 @@ struct SignInView: View {
                         AuthService.shared.skipSignIn()
                     } label: {
                         Text("Skip (DEBUG only)")
-                            .font(.system(size: 14, weight: .light))
+                            .font(.system(size: 14, weight: .regular))
                             .foregroundStyle(StackTheme.tertiaryText)
                     }
                     .padding(.top, 8)

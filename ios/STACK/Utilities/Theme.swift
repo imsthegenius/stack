@@ -3,11 +3,13 @@ import SwiftUI
 enum StackTheme {
     static let background = Color(hex: "0C0B09")
     static let primaryText = Color(hex: "F4F2EE")
-    static let secondaryText = Color(hex: "8C8880")
-    static let tertiaryText = Color(hex: "4A4845")
+    static let secondaryText = Color(hex: "A09890")
+    static let tertiaryText = Color(hex: "8A857F")
     static let ghost = Color(hex: "2E2C2A")
     static let milestoneWhite = Color.white
     static let separator = Color(hex: "1C1B19")
+    static let destructive = Color.red.opacity(0.8)
+    static let destructiveMuted = Color.red.opacity(0.5)
 }
 
 enum StackDateFormatter {

@@ -12,6 +12,7 @@ struct RelayWriteView: View {
     @State private var sentForward: Bool = false
     @State private var showError: Bool = false
     @State private var showFilterError: Bool = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private let maxLength = 500
 
@@ -20,11 +21,14 @@ struct RelayWriteView: View {
             StackTheme.background.ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 0) {
+                // Hidden anchor for sensory feedback on successful send
+                Color.clear.frame(width: 0, height: 0)
+                    .sensoryFeedback(.success, trigger: sentForward)
                 HStack {
                     Spacer()
                     Button { onDismiss() } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .light))
+                            .font(.system(size: 16, weight: .regular))
                             .foregroundStyle(StackTheme.tertiaryText)
                             .padding(12)
                     }
@@ -33,7 +37,7 @@ struct RelayWriteView: View {
                 .padding(.top, 8)
 
                 Text(writePrompt)
-                    .font(.system(size: 16, weight: .light))
+                    .font(.system(size: 16, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                     .padding(.horizontal, 28)
                     .padding(.top, 12)
@@ -42,7 +46,7 @@ struct RelayWriteView: View {
                     if messageText.isEmpty {
                         Text(writePlaceholder)
                             .font(Font.custom("Georgia", size: 18))
-                            .foregroundStyle(StackTheme.ghost)
+                            .foregroundStyle(StackTheme.tertiaryText)
                             .padding(.top, 8)
                             .allowsHitTesting(false)
                     }
@@ -62,9 +66,11 @@ struct RelayWriteView: View {
                 .padding(.horizontal, 28)
                 .padding(.top, 24)
                 .frame(minHeight: 160)
+                .opacity(sentForward ? 0.3 : 1.0)
+                .animation(reduceMotion ? .none : .easeOut(duration: 0.3), value: sentForward)
 
                 Text("\(maxLength - messageText.count)")
-                    .font(.system(size: 12, weight: .light))
+                    .font(.system(size: 12, weight: .regular))
                     .foregroundStyle(StackTheme.tertiaryText)
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.horizontal, 28)
@@ -85,7 +91,7 @@ struct RelayWriteView: View {
                             Text("Send forward")
                         }
                     }
-                    .font(.system(size: 15, weight: .light))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.primaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
@@ -101,13 +107,13 @@ struct RelayWriteView: View {
 
                 if showFilterError {
                     Text("Your message couldn't be sent. Please revise it.")
-                        .font(.system(size: 12, weight: .light))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundStyle(StackTheme.tertiaryText)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 10)
                 } else if showError {
                     Text("Something went wrong. Try again.")
-                        .font(.system(size: 12, weight: .light))
+                        .font(.system(size: 12, weight: .regular))
                         .foregroundStyle(StackTheme.tertiaryText)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 10)
@@ -117,7 +123,7 @@ struct RelayWriteView: View {
                     onDismiss()
                 } label: {
                     Text("Later")
-                        .font(.system(size: 13, weight: .light))
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(.vertical, 12)
                 }

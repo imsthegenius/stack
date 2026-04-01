@@ -1,7 +1,18 @@
 import SwiftUI
 
+// MARK: - Press-scale ButtonStyle for CTAs
+
+struct StackPressButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
+            .animation(.spring(duration: 0.2, bounce: 0), value: configuration.isPressed)
+    }
+}
+
 struct OnboardingContainerView: View {
     let store: StackStore
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @State private var currentPage: Int = 0
     @State private var selectedPath: OnboardingPath?
     @State private var selectedDate: Date = Date()
@@ -65,10 +76,9 @@ struct OnboardingContainerView: View {
                         // Swipe affordance — visible on intro screens 0 and 1 only
                         if currentPage < 2 {
                             Text("swipe")
-                                .font(.system(size: 11, weight: .light))
+                                .font(.system(size: 12, weight: .regular))
                                 .tracking(3)
                                 .foregroundStyle(StackTheme.tertiaryText)
-                                .opacity(0.5)
                         }
 
                         pageIndicator
@@ -80,10 +90,10 @@ struct OnboardingContainerView: View {
         .overlay(alignment: .topLeading) {
             if currentPage >= 3 {
                 Button {
-                    withAnimation(.smooth) { currentPage -= 1 }
+                    withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage -= 1 }
                 } label: {
                     Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .light))
+                        .font(.system(size: 17, weight: .regular))
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(16)
                         .contentShape(Rectangle())
@@ -94,10 +104,10 @@ struct OnboardingContainerView: View {
         .overlay(alignment: .topTrailing) {
             if currentPage < 3 {
                 Button {
-                    withAnimation(.smooth) { currentPage = 3 }
+                    withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage = 3 }
                 } label: {
                     Text("Skip")
-                        .font(.system(size: 15, weight: .light))
+                        .font(.system(size: 15, weight: .regular))
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(16)
                         .contentShape(Rectangle())
@@ -110,9 +120,9 @@ struct OnboardingContainerView: View {
             DragGesture(minimumDistance: 30)
                 .onEnded { value in
                     if value.translation.width < -30 {
-                        withAnimation(.smooth) { currentPage += 1 }
+                        withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage += 1 }
                     } else if value.translation.width > 30 && currentPage > 0 {
-                        withAnimation(.smooth) { currentPage -= 1 }
+                        withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage -= 1 }
                     }
                 }
             : nil
@@ -121,17 +131,17 @@ struct OnboardingContainerView: View {
 
     private var screen1: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Wherever you are, you're not starting over.")
+            Text("Every day counts.")
                 .font(.system(size: 42, weight: .light))
                 .foregroundStyle(StackTheme.primaryText)
 
-            Text("Whether this is Day 1 or Day 847 — everything counts.")
-                .font(.system(size: 17, weight: .light))
+            Text("Whether this is Day 1 or Day 847 — nothing disappears.")
+                .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 24)
 
-            Text("Nothing resets. Nothing disappears. It all stacks.")
-                .font(.system(size: 17, weight: .light))
+            Text("Nothing resets. It all stacks.")
+                .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
 
@@ -142,7 +152,7 @@ struct OnboardingContainerView: View {
                 store.save()
             } label: {
                 Text("I already have an account")
-                    .font(.system(size: 13, weight: .light))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(StackTheme.tertiaryText)
             }
             .frame(maxWidth: .infinity)
@@ -157,13 +167,13 @@ struct OnboardingContainerView: View {
                 .font(.system(size: 42, weight: .light))
                 .foregroundStyle(StackTheme.primaryText)
 
-            Text("Other apps count what you lose when you slip.")
-                .font(.system(size: 17, weight: .light))
+            Text("Other counters start you back at zero.")
+                .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 24)
 
             Text("STACK keeps everything. Every chapter stays.")
-                .font(.system(size: 17, weight: .light))
+                .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
 
@@ -173,7 +183,7 @@ struct OnboardingContainerView: View {
                 StackTheme.separator.frame(height: 0.5).padding(.vertical, 4)
                 Text("974 days stacked")
             }
-            .font(.system(size: 13, weight: .light))
+            .font(.system(size: 13, weight: .regular))
             .foregroundStyle(StackTheme.tertiaryText)
             .padding(.top, 32)
         }
@@ -182,27 +192,27 @@ struct OnboardingContainerView: View {
 
     private var screen3: some View {
         VStack(alignment: .leading, spacing: 0) {
-            Text("Someone left you something.")
+            Text("Messages at milestones.")
                 .font(.system(size: 42, weight: .light))
                 .foregroundStyle(StackTheme.primaryText)
 
-            Text("When you hit a milestone, a message arrives.")
-                .font(.system(size: 17, weight: .light))
+            Text("At certain days, a short anonymous message appears.")
+                .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 24)
 
-            Text("From someone who stood exactly where you're standing.")
-                .font(.system(size: 17, weight: .light))
+            Text("Written by someone who reached that number before you.")
+                .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
 
-            Text("When you're ready, you write one forward.")
-                .font(.system(size: 17, weight: .light))
+            Text("When you're ready, you leave one for the next person.")
+                .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
 
             Text("Your first week of messages is free. After that, one payment unlocks the relay forever.")
-                .font(.system(size: 15, weight: .light))
+                .font(.system(size: 15, weight: .regular))
                 .foregroundStyle(StackTheme.tertiaryText)
                 .padding(.top, 24)
         }
@@ -219,29 +229,31 @@ struct OnboardingContainerView: View {
 
             Button {
                 selectedPath = .new
-                withAnimation(.smooth) { currentPage = 4 }
+                withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage = 4 }
             } label: {
                 Text("Starting today")
-                    .font(.system(size: 15, weight: .light))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.background)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(StackTheme.primaryText)
                     .clipShape(.rect(cornerRadius: 12))
             }
+            .buttonStyle(StackPressButtonStyle())
 
             Button {
                 selectedPath = .existing
-                withAnimation(.smooth) { currentPage = 4 }
+                withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage = 4 }
             } label: {
                 Text("I'm already counting")
-                    .font(.system(size: 15, weight: .light))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(StackTheme.separator)
                     .clipShape(.rect(cornerRadius: 12))
             }
+            .buttonStyle(StackPressButtonStyle())
             .padding(.top, 16)
         }
         .padding(.horizontal, 28)
@@ -271,19 +283,20 @@ struct OnboardingContainerView: View {
                     store.createInitialChapter(startDate: startDate)
                 } label: {
                     Text("Let's go")
-                        .font(.system(size: 15, weight: .light))
+                        .font(.system(size: 15, weight: .regular))
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(StackTheme.primaryText)
                         .clipShape(.rect(cornerRadius: 12))
                 }
+                .buttonStyle(StackPressButtonStyle())
 
                 Button {
-                    withAnimation(.smooth) { showConfirmation = false }
+                    withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { showConfirmation = false }
                 } label: {
                     Text("Change date")
-                        .font(.system(size: 13, weight: .light))
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(.vertical, 12)
                 }
@@ -295,7 +308,7 @@ struct OnboardingContainerView: View {
                     .foregroundStyle(StackTheme.primaryText)
 
                 Text("Or tap below if today is Day 1.")
-                    .font(.system(size: 16, weight: .light))
+                    .font(.system(size: 16, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                     .padding(.top, 8)
 
@@ -307,21 +320,22 @@ struct OnboardingContainerView: View {
 
                 Button {
                     confirmedDate = selectedDate
-                    withAnimation(.smooth) { showConfirmation = true }
+                    withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { showConfirmation = true }
                 } label: {
                     let isToday = Calendar.current.isDateInToday(selectedDate)
                     Text(isToday ? "This is Day 1" : "Start from \(Self.formatDate(selectedDate))")
-                        .font(.system(size: 15, weight: .light))
+                        .font(.system(size: 15, weight: .regular))
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(StackTheme.primaryText)
                         .clipShape(.rect(cornerRadius: 12))
                 }
+                .buttonStyle(StackPressButtonStyle())
                 .padding(.top, 24)
 
                 Text("Sign in after setup to back up your progress.")
-                    .font(.system(size: 12, weight: .light))
+                    .font(.system(size: 12, weight: .regular))
                     .foregroundStyle(StackTheme.tertiaryText)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -351,13 +365,13 @@ struct OnboardingContainerView: View {
                     .foregroundStyle(StackTheme.primaryText)
 
                 Text("CURRENT CHAPTER")
-                    .font(.system(size: 11, weight: .light))
+                    .font(.system(size: 12, weight: .regular))
                     .tracking(1.5)
                     .foregroundStyle(StackTheme.tertiaryText)
                     .padding(.top, 24)
 
                 DatePicker("Started on", selection: $historyCurrentStart, in: ...Date(), displayedComponents: .date)
-                    .font(.system(size: 15, weight: .light))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                     .colorScheme(.dark)
                     .padding(.top, 8)
@@ -369,14 +383,14 @@ struct OnboardingContainerView: View {
 
                 if let overlap = currentStartOverlapMessage {
                     Text(overlap)
-                        .font(.system(size: 13, weight: .light))
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(.top, 4)
                 }
 
                 Toggle(isOn: $showHistory) {
                     Text("I have previous chapters")
-                        .font(.system(size: 15, weight: .light))
+                        .font(.system(size: 15, weight: .regular))
                         .foregroundStyle(StackTheme.secondaryText)
                 }
                 .tint(StackTheme.primaryText)
@@ -384,7 +398,7 @@ struct OnboardingContainerView: View {
 
                 if showHistory {
                     Text("PREVIOUS CHAPTERS")
-                        .font(.system(size: 11, weight: .light))
+                        .font(.system(size: 12, weight: .regular))
                         .tracking(1.5)
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(.top, 24)
@@ -393,7 +407,7 @@ struct OnboardingContainerView: View {
                         ForEach(previousChapters) { entry in
                             let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
                             Text("Chapter \(entry.number) · \(days) days · \(StackDateFormatter.string(from: entry.startDate)) – \(StackDateFormatter.string(from: entry.endDate))")
-                                .font(.system(size: 14, weight: .light))
+                                .font(.system(size: 14, weight: .regular))
                                 .foregroundStyle(StackTheme.tertiaryText)
                                 .listRowBackground(Color.clear)
                                 .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
@@ -412,7 +426,7 @@ struct OnboardingContainerView: View {
                         showAddChapter = true
                     } label: {
                         Text("+ Add chapter")
-                            .font(.system(size: 14, weight: .light))
+                            .font(.system(size: 14, weight: .regular))
                             .foregroundStyle(StackTheme.secondaryText)
                     }
                     .padding(.top, 12)
@@ -425,13 +439,14 @@ struct OnboardingContainerView: View {
                     showHistorySummary = true
                 } label: {
                     Text("Start stacking")
-                        .font(.system(size: 15, weight: .light))
+                        .font(.system(size: 15, weight: .regular))
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(currentStartOverlapMessage == nil ? StackTheme.primaryText : StackTheme.ghost)
                         .clipShape(.rect(cornerRadius: 12))
                 }
+                .buttonStyle(StackPressButtonStyle())
                 .disabled(currentStartOverlapMessage != nil)
                 .padding(.top, 24)
                 .padding(.bottom, 48)
@@ -462,13 +477,13 @@ struct OnboardingContainerView: View {
             let chapterNum = previousChapters.count + 1
 
             Text("Chapter \(chapterNum)  ·  currently Day \(currentDays)")
-                .font(.system(size: 15, weight: .light))
+                .font(.system(size: 15, weight: .regular))
                 .foregroundStyle(StackTheme.primaryText)
 
             ForEach(previousChapters.reversed()) { entry in
                 let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
                 Text("Chapter \(entry.number)  ·  \(days) days")
-                    .font(.system(size: 15, weight: .light))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.tertiaryText)
             }
 
@@ -478,7 +493,7 @@ struct OnboardingContainerView: View {
                 $0 + (Calendar.current.dateComponents([.day], from: $1.startDate, to: $1.endDate).day ?? 0)
             }
             Text("\(currentDays + totalPrevious) days stacked")
-                .font(.system(size: 14, weight: .light))
+                .font(.system(size: 14, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
         }
     }
@@ -487,16 +502,16 @@ struct OnboardingContainerView: View {
         NavigationStack {
             VStack(spacing: 24) {
                 DatePicker("Start date", selection: $addChapterStart, in: ...Date(), displayedComponents: .date)
-                    .font(.system(size: 15, weight: .light))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                 DatePicker("End date", selection: $addChapterEnd, in: ...Date(), displayedComponents: .date)
-                    .font(.system(size: 15, weight: .light))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
 
                 // Fix 1 & 2: inline validation error message
                 if addChapterDateRangeInvalid {
                     Text("End date must be after start date.")
-                        .font(.system(size: 13, weight: .light))
+                        .font(.system(size: 13, weight: .regular))
                         .foregroundStyle(StackTheme.tertiaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 } else if addChapterOverlapsExisting {
@@ -504,7 +519,7 @@ struct OnboardingContainerView: View {
                         addChapterStart < entry.endDate && addChapterEnd > entry.startDate
                     }) {
                         Text("Overlaps with Chapter \(overlapping.number) (\(StackDateFormatter.string(from: overlapping.startDate)) – \(StackDateFormatter.string(from: overlapping.endDate)))")
-                            .font(.system(size: 13, weight: .light))
+                            .font(.system(size: 13, weight: .regular))
                             .foregroundStyle(StackTheme.tertiaryText)
                             .frame(maxWidth: .infinity, alignment: .leading)
                     }
@@ -522,7 +537,7 @@ struct OnboardingContainerView: View {
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
                     Button("Cancel") { showAddChapter = false }
-                        .font(.system(size: 16, weight: .light))
+                        .font(.system(size: 16, weight: .regular))
                         .foregroundStyle(StackTheme.secondaryText)
                 }
                 ToolbarItem(placement: .confirmationAction) {
@@ -535,7 +550,7 @@ struct OnboardingContainerView: View {
                         previousChapters.append(entry)
                         showAddChapter = false
                     }
-                    .font(.system(size: 16, weight: .light))
+                    .font(.system(size: 16, weight: .regular))
                     .foregroundStyle(addChapterIsValid ? StackTheme.primaryText : StackTheme.tertiaryText)
                     .disabled(!addChapterIsValid)
                 }
@@ -546,9 +561,17 @@ struct OnboardingContainerView: View {
     private var pageIndicator: some View {
         HStack(spacing: 8) {
             ForEach(0..<4, id: \.self) { index in
+                let isActive = index == currentPage
                 Circle()
-                    .fill(index == currentPage ? StackTheme.primaryText : StackTheme.ghost)
-                    .frame(width: 5, height: 5)
+                    .fill(isActive ? StackTheme.primaryText : StackTheme.ghost)
+                    .frame(
+                        width: isActive ? 6 : 5,
+                        height: isActive ? 6 : 5
+                    )
+                    .animation(
+                        reduceMotion ? .none : .spring(duration: 0.25, bounce: 0.3),
+                        value: currentPage
+                    )
             }
         }
     }

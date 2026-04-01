@@ -11,6 +11,10 @@ struct MilestoneMomentView: View {
     @State private var showPaywall: Bool = false
     @State private var showReportConfirmation: Bool = false
     @State private var reportedMessage: Bool = false
+    @State private var headerVisible: Bool = false
+    @State private var messageVisible: Bool = false
+    @State private var footerVisible: Bool = false
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var targetDay: Int {
         relayPoint?.day ?? store.currentDays
@@ -57,23 +61,27 @@ struct MilestoneMomentView: View {
 
             VStack(spacing: 0) {
                 Text("CHAPTER \(chapterNumber) · \(headerLabel)")
-                    .font(.system(size: 11, weight: .light))
+                    .font(.system(size: 12, weight: .regular))
                     .tracking(1.5)
                     .foregroundStyle(StackTheme.tertiaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 28)
                     .padding(.top, 16)
+                    .opacity(headerVisible ? 1.0 : 0.0)
 
                 Spacer()
 
                 messageArea
+                    .opacity(messageVisible ? 1.0 : 0.0)
+                    .offset(y: messageVisible ? 0 : (reduceMotion ? 0 : 10))
 
                 Spacer()
 
                 Text("Take your time.")
-                    .font(.system(size: 13, weight: .light))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(StackTheme.tertiaryText)
                     .padding(.bottom, 48)
+                    .opacity(footerVisible ? 1.0 : 0.0)
             }
 
             VStack {
@@ -83,7 +91,7 @@ struct MilestoneMomentView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .light))
+                            .font(.system(size: 16, weight: .regular))
                             .foregroundStyle(StackTheme.tertiaryText)
                             .padding(12)
                     }
@@ -94,10 +102,32 @@ struct MilestoneMomentView: View {
             }
         }
         .onAppear {
+            // Staggered entrance: header first
+            withAnimation(reduceMotion ? .none : .easeOut(duration: 0.3)) {
+                headerVisible = true
+            }
             Task { await loadRelay() }
             Task {
                 try? await Task.sleep(nanoseconds: 3_000_000_000)
                 if isLoading { isLoading = false }
+            }
+        }
+        .onChange(of: isLoading) { _, loading in
+            if !loading {
+                // Message animates in when fetch completes
+                withAnimation(reduceMotion ? .none : .spring(duration: 0.4, bounce: 0.08)) {
+                    messageVisible = true
+                }
+                // Footer fades in 200ms after message
+                let skipMotion = reduceMotion
+                Task {
+                    if !skipMotion {
+                        try? await Task.sleep(nanoseconds: 200_000_000)
+                    }
+                    withAnimation(skipMotion ? .none : .easeOut(duration: 0.3)) {
+                        footerVisible = true
+                    }
+                }
             }
         }
         .fullScreenCover(isPresented: $showWritePhase) {
@@ -135,7 +165,7 @@ struct MilestoneMomentView: View {
 
     private var loadingView: some View {
         Text("·  ·  ·")
-            .font(.system(size: 17, weight: .light))
+            .font(.system(size: 17, weight: .regular))
             .foregroundStyle(StackTheme.tertiaryText)
             .opacity(0.3)
             .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: isLoading)
@@ -146,7 +176,7 @@ struct MilestoneMomentView: View {
             VStack(alignment: .leading, spacing: 0) {
                 if reportedMessage {
                     Text("Reported. Thank you.")
-                        .font(.system(size: 15, weight: .light))
+                        .font(.system(size: 15, weight: .regular))
                         .foregroundStyle(StackTheme.tertiaryText)
                 } else {
                     Text(message.text)
@@ -157,7 +187,7 @@ struct MilestoneMomentView: View {
 
                     HStack {
                         Text("— from \(milestoneWriterLabel)")
-                            .font(.system(size: 12, weight: .light))
+                            .font(.system(size: 12, weight: .regular))
                             .foregroundStyle(StackTheme.tertiaryText)
 
                         Spacer()
@@ -166,7 +196,7 @@ struct MilestoneMomentView: View {
                             showReportConfirmation = true
                         } label: {
                             Image(systemName: "flag")
-                                .font(.system(size: 11, weight: .light))
+                                .font(.system(size: 12, weight: .regular))
                                 .foregroundStyle(StackTheme.tertiaryText)
                         }
                     }
@@ -179,13 +209,15 @@ struct MilestoneMomentView: View {
             .padding(.horizontal, 28)
 
             if !reportedMessage {
-                Text("Tap to write one forward →")
-                    .font(.system(size: 12, weight: .light))
+                Text("Tap to leave one for the next person →")
+                    .font(.system(size: 12, weight: .regular))
                     .foregroundStyle(StackTheme.tertiaryText)
                     .padding(.top, 12)
             }
         }
         .contentShape(Rectangle())
+        .accessibilityLabel("Write a relay message forward")
+        .accessibilityAddTraits(.isButton)
         .onTapGesture { if !reportedMessage { showWritePhase = true } }
         .confirmationDialog("Report this message?", isPresented: $showReportConfirmation) {
             Button("Report", role: .destructive) {
@@ -209,6 +241,8 @@ struct MilestoneMomentView: View {
         .clipShape(RoundedRectangle(cornerRadius: 8))
         .padding(.horizontal, 28)
         .contentShape(Rectangle())
+        .accessibilityLabel("Write a relay message")
+        .accessibilityAddTraits(.isButton)
         .onTapGesture { showWritePhase = true }
     }
 
@@ -222,7 +256,7 @@ struct MilestoneMomentView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
 
             Text("— from \(milestoneWriterLabel)")
-                .font(.system(size: 12, weight: .light))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundStyle(StackTheme.tertiaryText)
                 .padding(.top, 12)
 
@@ -231,7 +265,7 @@ struct MilestoneMomentView: View {
                 showPaywall = true
             } label: {
                 Text("Unlock STACK")
-                    .font(.system(size: 15, weight: .light))
+                    .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.background)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 14)
@@ -241,7 +275,7 @@ struct MilestoneMomentView: View {
             .padding(.top, 20)
 
             Text("One time. No subscription.")
-                .font(.system(size: 12, weight: .light))
+                .font(.system(size: 12, weight: .regular))
                 .foregroundStyle(StackTheme.tertiaryText)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 10)

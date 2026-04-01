@@ -25,8 +25,9 @@ struct STACKApp: App {
         UINavigationBar.appearance().scrollEdgeAppearance = appearance
         UINavigationBar.appearance().compactAppearance = appearance
 
-        let tertiaryColor = UIColor(red: 74/255, green: 72/255, blue: 69/255, alpha: 1)
-        let tabFont = UIFont.systemFont(ofSize: 10, weight: .light)
+        // Tertiary text: #8A857F
+        let tertiaryColor = UIColor(red: 138/255, green: 133/255, blue: 127/255, alpha: 1)
+        let tabFont = UIFont.systemFont(ofSize: 10, weight: .regular)
 
         let tabAppearance = UITabBarAppearance()
         tabAppearance.configureWithDefaultBackground()
