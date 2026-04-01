@@ -10,6 +10,16 @@ struct StackPressButtonStyle: ButtonStyle {
     }
 }
 
+// MARK: - Entrance animation helper
+
+private extension View {
+    func entranceAnimation(visible: Bool) -> some View {
+        self
+            .opacity(visible ? 1 : 0)
+            .offset(y: visible ? 0 : 10)
+    }
+}
+
 struct OnboardingContainerView: View {
     let store: StackStore
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
@@ -25,6 +35,7 @@ struct OnboardingContainerView: View {
     @State private var showConfirmation: Bool = false
     @State private var confirmedDate: Date?
     @State private var showHistorySummary: Bool = false
+    @State private var visibleElements: Int = 0
     enum OnboardingPath {
         case new
         case existing
@@ -68,29 +79,43 @@ struct OnboardingContainerView: View {
                     default: EmptyView()
                     }
                 }
+                .id(currentPage)
+                .transition(.opacity)
 
                 Spacer()
 
                 if currentPage < 3 {
                     VStack(spacing: 12) {
-                        // Swipe affordance — visible on intro screens 0 and 1 only
                         if currentPage < 2 {
                             Text("swipe")
                                 .font(.system(size: 12, weight: .regular))
                                 .tracking(3)
                                 .foregroundStyle(StackTheme.tertiaryText)
                         }
-
                         pageIndicator
                     }
                     .padding(.bottom, 48)
                 }
             }
+            .task(id: currentPage) {
+                guard !reduceMotion else {
+                    visibleElements = 3
+                    return
+                }
+                withAnimation(.easeOut(duration: 0.3)) { visibleElements = 1 }
+                try? await Task.sleep(nanoseconds: 80_000_000)
+                withAnimation(.easeOut(duration: 0.3)) { visibleElements = 2 }
+                try? await Task.sleep(nanoseconds: 80_000_000)
+                withAnimation(.easeOut(duration: 0.3)) { visibleElements = 3 }
+            }
+            .onChange(of: currentPage) { _, _ in
+                if !reduceMotion { visibleElements = 0 }
+            }
         }
         .overlay(alignment: .topLeading) {
             if currentPage >= 3 {
                 Button {
-                    withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage -= 1 }
+                    withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage -= 1 }
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .regular))
@@ -104,7 +129,7 @@ struct OnboardingContainerView: View {
         .overlay(alignment: .topTrailing) {
             if currentPage < 3 {
                 Button {
-                    withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage = 3 }
+                    withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage = 3 }
                 } label: {
                     Text("Skip")
                         .font(.system(size: 15, weight: .regular))
@@ -120,30 +145,35 @@ struct OnboardingContainerView: View {
             DragGesture(minimumDistance: 30)
                 .onEnded { value in
                     if value.translation.width < -30 {
-                        withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage += 1 }
+                        withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage += 1 }
                     } else if value.translation.width > 30 && currentPage > 0 {
-                        withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage -= 1 }
+                        withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage -= 1 }
                     }
                 }
             : nil
         )
     }
 
+    // MARK: - Screen 1
+
     private var screen1: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Every day counts.")
                 .font(.system(size: 42, weight: .light))
                 .foregroundStyle(StackTheme.primaryText)
+                .entranceAnimation(visible: visibleElements >= 1)
 
             Text("Whether this is Day 1 or Day 847 — nothing disappears.")
                 .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 24)
+                .entranceAnimation(visible: visibleElements >= 2)
 
             Text("Nothing resets. It all stacks.")
                 .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
+                .entranceAnimation(visible: visibleElements >= 2)
 
             Spacer()
 
@@ -157,25 +187,31 @@ struct OnboardingContainerView: View {
             }
             .frame(maxWidth: .infinity)
             .padding(.bottom, 24)
+            .entranceAnimation(visible: visibleElements >= 3)
         }
         .padding(.horizontal, 28)
     }
+
+    // MARK: - Screen 2
 
     private var screen2: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("No resets. Ever.")
                 .font(.system(size: 42, weight: .light))
                 .foregroundStyle(StackTheme.primaryText)
+                .entranceAnimation(visible: visibleElements >= 1)
 
             Text("Other counters start you back at zero.")
                 .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 24)
+                .entranceAnimation(visible: visibleElements >= 2)
 
             Text("STACK keeps everything. Every chapter stays.")
                 .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
+                .entranceAnimation(visible: visibleElements >= 2)
 
             VStack(alignment: .leading, spacing: 4) {
                 Text("Chapter 1  ·  127 days  ·  Mar 2023 – Jul 2023")
@@ -186,50 +222,61 @@ struct OnboardingContainerView: View {
             .font(.system(size: 13, weight: .regular))
             .foregroundStyle(StackTheme.tertiaryText)
             .padding(.top, 32)
+            .entranceAnimation(visible: visibleElements >= 3)
         }
         .padding(.horizontal, 28)
     }
+
+    // MARK: - Screen 3
 
     private var screen3: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Messages at milestones.")
                 .font(.system(size: 42, weight: .light))
                 .foregroundStyle(StackTheme.primaryText)
+                .entranceAnimation(visible: visibleElements >= 1)
 
             Text("At certain days, a short anonymous message appears.")
                 .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 24)
+                .entranceAnimation(visible: visibleElements >= 2)
 
             Text("Written by someone who reached that number before you.")
                 .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
+                .entranceAnimation(visible: visibleElements >= 2)
 
             Text("When you're ready, you leave one for the next person.")
                 .font(.system(size: 17, weight: .regular))
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 16)
+                .entranceAnimation(visible: visibleElements >= 2)
 
             Text("Your first week of messages is free. After that, one payment unlocks the relay forever.")
                 .font(.system(size: 15, weight: .regular))
                 .foregroundStyle(StackTheme.tertiaryText)
                 .padding(.top, 24)
+                .entranceAnimation(visible: visibleElements >= 3)
         }
         .padding(.horizontal, 28)
     }
+
+    // MARK: - Screen 4
 
     private var screen4: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Where are you?")
                 .font(.system(size: 42, weight: .light))
                 .foregroundStyle(StackTheme.primaryText)
+                .entranceAnimation(visible: visibleElements >= 1)
 
             Spacer().frame(height: 48)
 
             Button {
                 selectedPath = .new
-                withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage = 4 }
+                withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage = 4 }
             } label: {
                 Text("Starting today")
                     .font(.system(size: 15, weight: .regular))
@@ -240,10 +287,11 @@ struct OnboardingContainerView: View {
                     .clipShape(.rect(cornerRadius: 12))
             }
             .buttonStyle(StackPressButtonStyle())
+            .entranceAnimation(visible: visibleElements >= 2)
 
             Button {
                 selectedPath = .existing
-                withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { currentPage = 4 }
+                withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage = 4 }
             } label: {
                 Text("I'm already counting")
                     .font(.system(size: 15, weight: .regular))
@@ -255,9 +303,12 @@ struct OnboardingContainerView: View {
             }
             .buttonStyle(StackPressButtonStyle())
             .padding(.top, 16)
+            .entranceAnimation(visible: visibleElements >= 3)
         }
         .padding(.horizontal, 28)
     }
+
+    // MARK: - Screen 5A (new chapter)
 
     private var screen5A: some View {
         VStack(alignment: .leading, spacing: 0) {
@@ -293,7 +344,7 @@ struct OnboardingContainerView: View {
                 .buttonStyle(StackPressButtonStyle())
 
                 Button {
-                    withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { showConfirmation = false }
+                    withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { showConfirmation = false }
                 } label: {
                     Text("Change date")
                         .font(.system(size: 13, weight: .regular))
@@ -306,21 +357,26 @@ struct OnboardingContainerView: View {
                 Text("When did your current chapter begin?")
                     .font(.system(size: 34, weight: .light))
                     .foregroundStyle(StackTheme.primaryText)
+                    .entranceAnimation(visible: visibleElements >= 1)
 
                 Text("Or tap below if today is Day 1.")
                     .font(.system(size: 16, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                     .padding(.top, 8)
+                    .entranceAnimation(visible: visibleElements >= 1)
 
                 DatePicker("", selection: $selectedDate, in: ...Date(), displayedComponents: .date)
                     .datePickerStyle(.wheel)
                     .labelsHidden()
                     .colorScheme(.dark)
-                    .padding(.top, 24)
+                    .tint(StackTheme.primaryText)
+                    .frame(maxHeight: 200)
+                    .padding(.top, 16)
+                    .entranceAnimation(visible: visibleElements >= 2)
 
                 Button {
                     confirmedDate = selectedDate
-                    withAnimation(reduceMotion ? .none : .interactiveSpring(response: 0.38, dampingFraction: 0.82)) { showConfirmation = true }
+                    withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { showConfirmation = true }
                 } label: {
                     let isToday = Calendar.current.isDateInToday(selectedDate)
                     Text(isToday ? "This is Day 1" : "Start from \(Self.formatDate(selectedDate))")
@@ -333,6 +389,7 @@ struct OnboardingContainerView: View {
                 }
                 .buttonStyle(StackPressButtonStyle())
                 .padding(.top, 24)
+                .entranceAnimation(visible: visibleElements >= 3)
 
                 Text("Sign in after setup to back up your progress.")
                     .font(.system(size: 12, weight: .regular))
@@ -340,10 +397,13 @@ struct OnboardingContainerView: View {
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 16)
+                    .entranceAnimation(visible: visibleElements >= 3)
             }
         }
         .padding(.horizontal, 28)
     }
+
+    // MARK: - Screen 5B (existing counter)
 
     private var currentStartOverlapMessage: String? {
         guard !previousChapters.isEmpty else { return nil }
@@ -363,18 +423,22 @@ struct OnboardingContainerView: View {
                 Text("Let's bring it all.")
                     .font(.system(size: 34, weight: .light))
                     .foregroundStyle(StackTheme.primaryText)
+                    .entranceAnimation(visible: visibleElements >= 1)
 
                 Text("CURRENT CHAPTER")
                     .font(.system(size: 12, weight: .regular))
                     .tracking(1.5)
                     .foregroundStyle(StackTheme.tertiaryText)
                     .padding(.top, 24)
+                    .entranceAnimation(visible: visibleElements >= 2)
 
                 DatePicker("Started on", selection: $historyCurrentStart, in: ...Date(), displayedComponents: .date)
                     .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                     .colorScheme(.dark)
+                    .tint(StackTheme.primaryText)
                     .padding(.top, 8)
+                    .entranceAnimation(visible: visibleElements >= 2)
                     .onChange(of: historyCurrentStart) { _, newValue in
                         if newValue > Date() {
                             historyCurrentStart = Date()
@@ -395,6 +459,7 @@ struct OnboardingContainerView: View {
                 }
                 .tint(StackTheme.primaryText)
                 .padding(.top, 24)
+                .entranceAnimation(visible: visibleElements >= 2)
 
                 if showHistory {
                     Text("PREVIOUS CHAPTERS")
@@ -434,6 +499,7 @@ struct OnboardingContainerView: View {
 
                 historyPreview
                     .padding(.top, 32)
+                    .entranceAnimation(visible: visibleElements >= 2)
 
                 Button {
                     showHistorySummary = true
@@ -450,6 +516,7 @@ struct OnboardingContainerView: View {
                 .disabled(currentStartOverlapMessage != nil)
                 .padding(.top, 24)
                 .padding(.bottom, 48)
+                .entranceAnimation(visible: visibleElements >= 3)
             }
             .padding(.horizontal, 28)
         }
@@ -504,11 +571,14 @@ struct OnboardingContainerView: View {
                 DatePicker("Start date", selection: $addChapterStart, in: ...Date(), displayedComponents: .date)
                     .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
+                    .colorScheme(.dark)
+                    .tint(StackTheme.primaryText)
                 DatePicker("End date", selection: $addChapterEnd, in: ...Date(), displayedComponents: .date)
                     .font(.system(size: 15, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
+                    .colorScheme(.dark)
+                    .tint(StackTheme.primaryText)
 
-                // Fix 1 & 2: inline validation error message
                 if addChapterDateRangeInvalid {
                     Text("End date must be after start date.")
                         .font(.system(size: 13, weight: .regular))

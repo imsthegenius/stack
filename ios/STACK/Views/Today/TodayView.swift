@@ -47,19 +47,19 @@ struct TodayView: View {
 
                 counterBlock
 
-                if pledgedToday && relayLoading {
-                    Text("Loading relay message...")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(StackTheme.secondaryText)
-                        .padding(.top, 12)
-                        .transition(.opacity)
-                }
-
                 if pledgedToday && stackedTextVisible {
                     Text("Stacked.")
                         .font(.system(size: 14, weight: .regular))
                         .foregroundStyle(StackTheme.secondaryText)
                         .padding(.top, 20)
+                        .transition(.opacity)
+                }
+
+                if pledgedToday && relayLoading {
+                    Text("Loading relay message...")
+                        .font(.system(size: 13, weight: .regular))
+                        .foregroundStyle(StackTheme.tertiaryText)
+                        .padding(.top, 12)
                         .transition(.opacity)
                 }
 
@@ -117,7 +117,13 @@ struct TodayView: View {
                         }
                     }
                     .padding(.top, 16)
-                    .transition(.opacity)
+                    .transition(reduceMotion
+                        ? .opacity
+                        : .asymmetric(
+                            insertion: .opacity.combined(with: .offset(y: 12)),
+                            removal: .opacity
+                        )
+                    )
                 }
 
                 // Countdown to next relay (non-relay days only)
