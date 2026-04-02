@@ -119,6 +119,11 @@ Separator:     #1C1B19  — StackTheme.separator
 - No `.ultraThinMaterial` behind the hero counter number
 - No warm black (#0C0B09) widget backgrounds — use `.containerBackground(.clear)`
 
+## Build Command
+```bash
+xcodebuild -project ios/STACK.xcodeproj -scheme STACK -destination 'platform=iOS Simulator,name=iPhone 16 Pro Max' build
+```
+
 ## Global App Setup
 - `.preferredColorScheme(.dark)` on WindowGroup — non-negotiable
 - `UINavigationBar.appearance()` override in `STACKApp.init()` — sets light weight for all nav titles

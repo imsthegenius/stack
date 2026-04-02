@@ -96,6 +96,7 @@ struct MilestoneMomentView: View {
                             .foregroundStyle(StackTheme.secondaryText)
                             .frame(width: 44, height: 44)
                     }
+                    .accessibilityLabel("Close")
                     .padding(.trailing, 8)
                     .padding(.top, 8)
                 }
