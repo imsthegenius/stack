@@ -85,7 +85,7 @@ Separator:     #1C1B19  — StackTheme.separator
 ### The Relay
 - Supabase: `https://wfckqpnxnzzwbgbthtsb.supabase.co`
 - Anon key: `REPLACE_WITH_SUPABASE_ANON_KEY` (see SupabaseService.swift TODO)
-- Free tier: relay message is blurred with paywall overlay
+- Free tier: relay message is truncated to 15 words with paywall overlay
 - Paid tier: shows relay message in Georgia font
 - After receiving: `store.receivedRelayMilestoneDays.append(days)` + `store.save()`
 - Phase 2: user writes a message forward via RelayWriteView

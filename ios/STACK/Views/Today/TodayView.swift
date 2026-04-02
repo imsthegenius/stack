@@ -33,9 +33,14 @@ struct TodayView: View {
                         switchToJourneyTab?()
                     } label: {
                         Text("CHAPTER \(chapter.chapterNumber)")
-                            .font(.system(size: 12, weight: .regular))
+                            .font(StackTypography.overline)
                             .tracking(1.5)
                             .foregroundStyle(StackTheme.secondaryText)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 6)
+                            .background(StackTheme.cardBackground)
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(StackTheme.cardBorder, lineWidth: 1.0))
                             .frame(maxWidth: .infinity, alignment: .leading)
                             .padding(.horizontal, 28)
                             .padding(.top, 16)
@@ -48,16 +53,20 @@ struct TodayView: View {
                 counterBlock
 
                 if pledgedToday && stackedTextVisible {
-                    Text("Stacked.")
-                        .font(.system(size: 14, weight: .regular))
-                        .foregroundStyle(StackTheme.secondaryText)
-                        .padding(.top, 20)
-                        .transition(.opacity)
+                    HStack(spacing: 6) {
+                        Image(systemName: "checkmark")
+                            .font(.system(size: 13, weight: .medium))
+                        Text("Stacked.")
+                            .font(.system(size: 15, weight: .medium))
+                    }
+                    .foregroundStyle(StackTheme.primaryText)
+                    .padding(.top, 20)
+                    .transition(.opacity)
                 }
 
                 if pledgedToday && relayLoading {
                     Text("Loading relay message...")
-                        .font(.system(size: 13, weight: .regular))
+                        .font(StackTypography.caption)
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(.top, 12)
                         .transition(.opacity)
@@ -72,22 +81,24 @@ struct TodayView: View {
                             .padding(.top, 24)
                             .transition(.opacity)
                     } else {
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text(message.text)
-                                .font(Font.custom("Georgia", size: 19))
-                                .foregroundStyle(StackTheme.secondaryText)
-                                .lineSpacing(5)
+                        StackCard(padding: 20, radius: StackTheme.cardRadiusSmall) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text(message.text)
+                                    .font(Font.custom("Georgia", size: 19))
+                                    .foregroundStyle(StackTheme.secondaryText)
+                                    .lineSpacing(5)
 
-                            Text("— from \(writerLabel(for: message))")
-                                .font(.system(size: 12, weight: .regular))
-                                .foregroundStyle(StackTheme.tertiaryText)
+                                Text("— from \(writerLabel(for: message))")
+                                    .font(StackTypography.caption)
+                                    .foregroundStyle(StackTheme.tertiaryText)
+                            }
                         }
                         .padding(.horizontal, 28)
-                        .padding(.top, 16)
+                        .padding(.top, 20)
                         .transition(reduceMotion
                             ? .opacity
                             : .asymmetric(
-                                insertion: .opacity.combined(with: .offset(y: 12)),
+                                insertion: .opacity.combined(with: .offset(y: 12)).combined(with: .scale(scale: 0.98)),
                                 removal: .opacity
                             )
                         )
@@ -99,24 +110,22 @@ struct TodayView: View {
 
                 // Locked relay state for free users on paid relay days
                 if showLockedRelay {
-                    VStack(spacing: 8) {
-                        Text("Relay message available.")
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
+                    StackCard(padding: 20, radius: StackTheme.cardRadiusSmall) {
+                        VStack(spacing: 14) {
+                            Text("A relay message is waiting.")
+                                .font(StackTypography.callout)
+                                .foregroundStyle(StackTheme.secondaryText)
 
-                        Button {
-                            showPaywallSheet = true
-                        } label: {
-                            HStack(spacing: 4) {
-                                Image(systemName: "lock.fill")
-                                    .font(.system(size: 12, weight: .regular))
+                            Button {
+                                showPaywallSheet = true
+                            } label: {
                                 Text("Unlock STACK")
-                                    .font(.system(size: 13, weight: .regular))
                             }
-                            .foregroundStyle(StackTheme.secondaryText)
+                            .buttonStyle(GoldCTAButtonStyle())
                         }
                     }
-                    .padding(.top, 16)
+                    .padding(.horizontal, 28)
+                    .padding(.top, 20)
                     .transition(reduceMotion
                         ? .opacity
                         : .asymmetric(
@@ -129,16 +138,26 @@ struct TodayView: View {
                 // Countdown to next relay (non-relay days only)
                 if pledgedToday && !store.isRelayDay, let daysLeft = store.daysUntilNextRelay, daysLeft <= 7 {
                     Text("\(daysLeft) day\(daysLeft == 1 ? "" : "s") until next relay")
-                        .font(.system(size: 12, weight: .regular))
+                        .font(StackTypography.caption)
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(.top, 12)
                 }
 
                 if store.chapters.count > 1 {
-                    Text("\(store.totalDays) days total across \(store.chapters.count) chapters")
-                        .font(.system(size: 12, weight: .regular))
-                        .foregroundStyle(StackTheme.tertiaryText)
-                        .padding(.top, 20)
+                    HStack(spacing: 4) {
+                        Text("\(store.totalDays)")
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(StackTheme.secondaryText)
+                        Text("days total across \(store.chapters.count) chapters")
+                            .font(StackTypography.caption)
+                            .foregroundStyle(StackTheme.tertiaryText)
+                    }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 10)
+                    .background(StackTheme.cardBackground)
+                    .clipShape(Capsule())
+                    .overlay(Capsule().stroke(StackTheme.cardBorder, lineWidth: 1.0))
+                    .padding(.top, 20)
                 }
 
                 Spacer()
@@ -207,21 +226,21 @@ struct TodayView: View {
         VStack(spacing: 0) {
             ZStack {
                 Circle()
-                    .stroke(StackTheme.ghost, style: StrokeStyle(lineWidth: 1, lineCap: .round))
+                    .stroke(StackTheme.ghost, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
                     .frame(width: 200, height: 200)
 
                 Circle()
                     .trim(from: 0, to: pledgedToday ? 1.0 : 0.0)
-                    .stroke(StackTheme.primaryText, style: StrokeStyle(lineWidth: 1, lineCap: .round))
+                    .stroke(StackTheme.primaryText, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .frame(width: 200, height: 200)
                     .animation(
-                        reduceMotion ? .none : .spring(duration: 0.5, bounce: 0.15),
+                        reduceMotion ? .none : StackAnimation.pledgeRing,
                         value: pledgedToday
                     )
 
                 Text("\(store.currentDays)")
-                    .font(.system(size: 88, weight: .thin))
+                    .font(StackTypography.heroCounter)
                     .foregroundStyle(store.isMilestoneDay ? StackTheme.milestoneWhite : StackTheme.primaryText)
                     .contentTransition(.numericText())
             }
@@ -283,18 +302,18 @@ struct TodayView: View {
 
             VStack(spacing: 6) {
                 Text("DAYS")
-                    .font(.system(size: 12, weight: .regular))
+                    .font(StackTypography.overline)
                     .tracking(1.5)
                     .foregroundStyle(StackTheme.secondaryText)
 
                 if let relayPoint = store.currentRelayPoint, relayPoint.isMilestone {
                     Text(relayPoint.label.uppercased())
-                        .font(.system(size: 12, weight: .regular))
+                        .font(StackTypography.overline)
                         .tracking(3)
                         .foregroundStyle(StackTheme.milestoneWhite)
                 } else if store.isMilestoneDay, let label = store.currentMilestoneLabel {
                     Text(label.uppercased())
-                        .font(.system(size: 12, weight: .regular))
+                        .font(StackTypography.overline)
                         .tracking(3)
                         .foregroundStyle(StackTheme.milestoneWhite)
                 }

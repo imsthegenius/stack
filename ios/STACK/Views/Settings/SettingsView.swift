@@ -19,7 +19,7 @@ struct SettingsView: View {
             ScrollView {
                 VStack(spacing: 0) {
                     Text("Settings")
-                        .font(.system(size: 34, weight: .light))
+                        .font(StackTypography.title)
                         .foregroundStyle(StackTheme.primaryText)
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .padding(.horizontal, 28)
@@ -28,96 +28,117 @@ struct SettingsView: View {
 
                     sectionHeader("WIDGET")
 
-                    Button {
-                        showWidgetInstructions = true
-                    } label: {
-                        settingsRow(title: "Add to lock screen", trailing: {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .regular))
-                                .foregroundStyle(StackTheme.tertiaryText)
-                        })
+                    VStack(spacing: 0) {
+                        Button {
+                            showWidgetInstructions = true
+                        } label: {
+                            settingsRow(title: "Add to lock screen", trailing: {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundStyle(StackTheme.tertiaryText)
+                            })
+                        }
                     }
-
-                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+                    .background(StackTheme.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
+                            .stroke(StackTheme.cardBorder, lineWidth: 1.0)
+                    )
+                    .padding(.horizontal, 20)
 
                     sectionHeader("STACK")
                         .padding(.top, 24)
 
-                    if store.lifetimePurchased {
-                        settingsRow(title: "Lifetime · Unlocked", trailing: { EmptyView() })
-                    } else {
-                        Button {
-                            showPaywall = true
-                        } label: {
-                            settingsRow(title: "Unlock STACK", trailing: {
-                                if !priceString.isEmpty {
-                                    Text("· \(priceString)")
-                                        .font(.system(size: 14, weight: .regular))
-                                        .foregroundStyle(StackTheme.tertiaryText)
+                    VStack(spacing: 0) {
+                        if store.lifetimePurchased {
+                            settingsRow(title: "Lifetime · Unlocked", trailing: { EmptyView() })
+                        } else {
+                            Button {
+                                showPaywall = true
+                            } label: {
+                                settingsRow(title: "Unlock STACK", trailing: {
+                                    if !priceString.isEmpty {
+                                        Text("· \(priceString)")
+                                            .font(StackTypography.footnote)
+                                            .foregroundStyle(StackTheme.gold)
+                                    }
+                                })
+                            }
+
+                            StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
+
+                            Button {
+                                Task { await restoreSettingsPurchases() }
+                            } label: {
+                                HStack {
+                                    Text("Restore purchases")
+                                        .font(StackTypography.body)
+                                        .foregroundStyle(StackTheme.secondaryText)
+                                    Spacer()
+                                    if isRestoring {
+                                        ProgressView()
+                                            .tint(StackTheme.secondaryText)
+                                            .scaleEffect(0.75)
+                                    }
                                 }
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 16)
+                                .contentShape(Rectangle())
+                            }
+                            .disabled(isRestoring)
+                        }
+
+                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
+
+                        Button {
+                            showNewChapterConfirmation = true
+                        } label: {
+                            settingsRow(title: "Start New Chapter", trailing: {
+                                Image(systemName: "chevron.right")
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundStyle(StackTheme.tertiaryText)
                             })
                         }
-
-                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
-
-                        Button {
-                            Task { await restoreSettingsPurchases() }
-                        } label: {
-                            HStack {
-                                Text("Restore purchases")
-                                    .font(.system(size: 14, weight: .regular))
-                                    .foregroundStyle(StackTheme.tertiaryText)
-                                Spacer()
-                                if isRestoring {
-                                    ProgressView()
-                                        .tint(StackTheme.tertiaryText)
-                                        .scaleEffect(0.75)
-                                }
-                            }
-                            .padding(.horizontal, 28)
-                            .padding(.vertical, 16)
-                            .contentShape(Rectangle())
-                        }
-                        .disabled(isRestoring)
                     }
-
-                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
-
-                    Button {
-                        showNewChapterConfirmation = true
-                    } label: {
-                        settingsRow(title: "Start New Chapter", trailing: {
-                            Image(systemName: "chevron.right")
-                                .font(.system(size: 12, weight: .regular))
-                                .foregroundStyle(StackTheme.tertiaryText)
-                        })
-                    }
-
-                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+                    .background(StackTheme.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
+                            .stroke(StackTheme.cardBorder, lineWidth: 1.0)
+                    )
+                    .padding(.horizontal, 20)
 
                     sectionHeader("ACCOUNT")
                         .padding(.top, 24)
 
                     if auth.isSignedIn {
-                        if let email = auth.userEmail {
-                            settingsRow(title: email, trailing: { EmptyView() })
-                            StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
-                        }
+                        VStack(spacing: 0) {
+                            if let email = auth.userEmail {
+                                settingsRow(title: email, trailing: { EmptyView() })
+                                StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
+                            }
 
-                        Button {
-                            auth.signOut()
-                        } label: {
-                            settingsRow(title: "Sign Out", trailing: { EmptyView() })
+                            Button {
+                                auth.signOut()
+                            } label: {
+                                settingsRow(title: "Sign Out", trailing: { EmptyView() })
+                            }
                         }
-
-                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+                        .background(StackTheme.cardBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
+                                .stroke(StackTheme.cardBorder, lineWidth: 1.0)
+                        )
+                        .padding(.horizontal, 20)
 
                         Button {
                             showDeleteConfirmation = true
                         } label: {
                             HStack {
                                 Text("Delete Account")
-                                    .font(.system(size: 16, weight: .regular))
+                                    .font(StackTypography.body)
                                     .foregroundStyle(StackTheme.destructive)
                                 Spacer()
                                 if isDeletingAccount {
@@ -126,57 +147,79 @@ struct SettingsView: View {
                                         .scaleEffect(0.75)
                                 }
                             }
-                            .padding(.horizontal, 28)
+                            .padding(.horizontal, 20)
                             .padding(.vertical, 16)
                             .contentShape(Rectangle())
                         }
                         .disabled(isDeletingAccount)
+                        .background(StackTheme.cardBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
+                                .stroke(StackTheme.destructive.opacity(0.3), lineWidth: 1.0)
+                        )
+                        .padding(.horizontal, 20)
+                        .padding(.top, 12)
                     } else {
-                        Button {
-                            showSignInSheet = true
-                        } label: {
-                            settingsRow(title: "Sign in with Apple", trailing: {
-                                Image(systemName: "apple.logo")
-                                    .font(.system(size: 14, weight: .regular))
-                                    .foregroundStyle(StackTheme.secondaryText)
-                            })
+                        VStack(spacing: 0) {
+                            Button {
+                                showSignInSheet = true
+                            } label: {
+                                settingsRow(title: "Sign in with Apple", trailing: {
+                                    Image(systemName: "apple.logo")
+                                        .font(.system(size: 14, weight: .regular))
+                                        .foregroundStyle(StackTheme.secondaryText)
+                                })
+                            }
                         }
+                        .background(StackTheme.cardBackground)
+                        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
+                        .overlay(
+                            RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
+                                .stroke(StackTheme.cardBorder, lineWidth: 1.0)
+                        )
+                        .padding(.horizontal, 20)
                     }
-
-                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
 
                     sectionHeader("LEGAL")
                         .padding(.top, 24)
 
-                    Link(destination: URL(string: "https://stack.twohundred.ai/privacy.html")!) {
-                        settingsRow(title: "Privacy Policy", trailing: {
-                            Image(systemName: "arrow.up.right")
-                                .font(.system(size: 12, weight: .regular))
-                                .foregroundStyle(StackTheme.tertiaryText)
-                        })
+                    VStack(spacing: 0) {
+                        Link(destination: URL(string: "https://stack.twohundred.ai/privacy.html")!) {
+                            settingsRow(title: "Privacy Policy", trailing: {
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundStyle(StackTheme.tertiaryText)
+                            })
+                        }
+
+                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
+
+                        Link(destination: URL(string: "https://stack.twohundred.ai/terms.html")!) {
+                            settingsRow(title: "Terms of Use", trailing: {
+                                Image(systemName: "arrow.up.right")
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundStyle(StackTheme.tertiaryText)
+                            })
+                        }
+
+                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
+
+                        Link(destination: URL(string: "mailto:hello@twohundred.ai")!) {
+                            settingsRow(title: "Contact Support", trailing: {
+                                Image(systemName: "envelope")
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundStyle(StackTheme.tertiaryText)
+                            })
+                        }
                     }
-
-                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
-
-                    Link(destination: URL(string: "https://stack.twohundred.ai/terms.html")!) {
-                        settingsRow(title: "Terms of Use", trailing: {
-                            Image(systemName: "arrow.up.right")
-                                .font(.system(size: 12, weight: .regular))
-                                .foregroundStyle(StackTheme.tertiaryText)
-                        })
-                    }
-
-                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
-
-                    Link(destination: URL(string: "mailto:hello@twohundred.ai")!) {
-                        settingsRow(title: "Contact Support", trailing: {
-                            Image(systemName: "envelope")
-                                .font(.system(size: 12, weight: .regular))
-                                .foregroundStyle(StackTheme.tertiaryText)
-                        })
-                    }
-
-                    StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+                    .background(StackTheme.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
+                            .stroke(StackTheme.cardBorder, lineWidth: 1.0)
+                    )
+                    .padding(.horizontal, 20)
 
                     sectionHeader("ABOUT")
                         .padding(.top, 24)
@@ -195,18 +238,25 @@ struct SettingsView: View {
                         Text(auth.isSignedIn
                              ? "Your data is backed up when signed in."
                              : "Sign in to back up your progress across devices.")
-                            .font(.system(size: 12, weight: .regular))
+                            .font(StackTypography.caption)
                             .foregroundStyle(StackTheme.tertiaryText)
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.horizontal, 28)
-                    .padding(.vertical, 16)
+                    .padding(20)
+                    .background(StackTheme.cardBackground)
+                    .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
+                            .stroke(StackTheme.cardBorder, lineWidth: 1.0)
+                    )
+                    .padding(.horizontal, 20)
 
                     #if DEBUG
                     debugSection
                     #endif
                 }
                 .padding(.top, 8)
+                .padding(.bottom, 32)
             }
             .background(StackTheme.background)
             .navigationTitle("")
@@ -347,7 +397,7 @@ struct SettingsView: View {
 
     private func sectionHeader(_ title: String) -> some View {
         Text(title)
-            .font(.system(size: 12, weight: .regular))
+            .font(StackTypography.overline)
             .tracking(1.5)
             .foregroundStyle(StackTheme.secondaryText)
             .frame(maxWidth: .infinity, alignment: .leading)
@@ -359,12 +409,12 @@ struct SettingsView: View {
     private func settingsRow<Trailing: View>(title: String, @ViewBuilder trailing: () -> Trailing) -> some View {
         HStack {
             Text(title)
-                .font(.system(size: 16, weight: .regular))
+                .font(StackTypography.body)
                 .foregroundStyle(StackTheme.primaryText)
             Spacer()
             trailing()
         }
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 20)
         .padding(.vertical, 16)
         .contentShape(Rectangle())
     }
@@ -404,7 +454,10 @@ struct WidgetInstructionsSheet: View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .stroke(StackTheme.ghost, lineWidth: 1)
+                    .fill(StackTheme.cardBackground)
+                    .frame(width: 36, height: 36)
+                Circle()
+                    .stroke(StackTheme.cardBorder, lineWidth: 1)
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .regular))
@@ -412,7 +465,7 @@ struct WidgetInstructionsSheet: View {
             }
 
             Text(text)
-                .font(.system(size: 15, weight: .regular))
+                .font(StackTypography.callout)
                 .foregroundStyle(StackTheme.primaryText)
         }
     }

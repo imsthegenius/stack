@@ -8,15 +8,16 @@ conditions:
     pattern: \.swift$
   - field: new_text
     operator: regex_match
-    pattern: weight:\s*\.(medium|bold|semibold|heavy|black)|\.fontWeight\(\.(medium|bold|semibold|heavy|black)\)
+    pattern: weight:\s*\.(bold|semibold|heavy|black)|\.fontWeight\(\.(bold|semibold|heavy|black)\)
 action: block
 ---
 
 **BLOCKED — Forbidden font weight in STACK**
 
-STACK uses three font weights:
-- `SF Pro Thin` (`.thin`) — for the 88pt hero counter ONLY
-- `SF Pro Light` (`.light`) — for 18pt and above (titles, headers, display text)
-- `SF Pro Regular` (`.regular`) — for 17pt and below (body, labels, buttons, legal)
+STACK v2 design system uses these font weights:
+- `SF Pro Light` (`.light`) — hero counter (88pt) ONLY
+- `SF Pro Regular` (`.regular`) — body text, labels (17pt and below)
+- `SF Pro Medium` (`.medium`) — ALLOWED for headlines, CTAs, overlines, section labels
 
-`.medium`, `.bold`, `.semibold`, `.heavy`, `.black` are ALL forbidden. No exceptions.
+`.bold`, `.semibold`, `.heavy`, `.black` are forbidden. No exceptions.
+NOTE: `.thin` is also now forbidden (counter changed from .thin to .light in design overhaul).

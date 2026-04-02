@@ -31,34 +31,43 @@ struct PaywallView: View {
                         dismiss()
                     } label: {
                         Image(systemName: "xmark")
-                            .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
-                            .padding(12)
+                            .font(.system(size: 20, weight: .regular))
+                            .foregroundStyle(StackTheme.secondaryText)
+                            .frame(width: 44, height: 44)
                     }
-                    .padding(.trailing, 16)
+                    .padding(.trailing, 8)
                 }
                 .padding(.top, 8)
 
                 Spacer()
 
-                VStack(alignment: .leading, spacing: 0) {
+                VStack(spacing: 0) {
                     Text("The relay.")
-                        .font(.system(size: 34, weight: .light))
+                        .font(StackTypography.title)
                         .foregroundStyle(StackTheme.primaryText)
 
                     Text("Anonymous messages from people who reached the same milestones. Read theirs. Leave one for the next person.")
                         .font(.system(size: 17, weight: .regular))
-                        .foregroundStyle(StackTheme.secondaryText)
+                        .foregroundStyle(StackTheme.primaryText)
                         .lineSpacing(4)
+                        .multilineTextAlignment(.center)
                         .padding(.top, 16)
+
+                    VStack(spacing: 16) {
+                        featureRow(icon: "envelope.open", text: "Read every relay message")
+                        featureRow(icon: "pencil.line", text: "Write messages forward")
+                        featureRow(icon: "infinity", text: "Unlimited, forever")
+                    }
+                    .padding(.top, 32)
 
                     if !priceString.isEmpty {
                         Text("\(priceString) · one time · forever")
-                            .font(.system(size: 15, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .font(.system(size: 15, weight: .medium))
+                            .foregroundStyle(StackTheme.gold)
                             .padding(.top, 24)
                     }
                 }
+                .frame(maxWidth: .infinity)
                 .padding(.horizontal, 28)
 
                 Spacer()
@@ -72,10 +81,7 @@ struct PaywallView: View {
                         }
                     } label: {
                         Group {
-                            if isLoadingOffering {
-                                ProgressView()
-                                    .tint(StackTheme.background)
-                            } else if isPurchasing {
+                            if isLoadingOffering || isPurchasing {
                                 ProgressView()
                                     .tint(StackTheme.background)
                             } else if loadFailed {
@@ -84,16 +90,10 @@ struct PaywallView: View {
                                 Text("Unlock STACK")
                             }
                         }
-                        .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(StackTheme.background)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(StackTheme.primaryText)
-                        .clipShape(.rect(cornerRadius: 12))
-                        .opacity(buttonDisabled && !loadFailed ? 0.4 : 1.0)
                     }
-                    .buttonStyle(PressScaleButtonStyle())
+                    .buttonStyle(GoldCTAButtonStyle())
                     .disabled(buttonDisabled && !loadFailed)
+                    .opacity(buttonDisabled && !loadFailed ? 0.5 : 1.0)
 
                     Button {
                         Task { await restore() }
@@ -101,14 +101,14 @@ struct PaywallView: View {
                         Group {
                             if isRestoring {
                                 ProgressView()
-                                    .tint(StackTheme.tertiaryText)
+                                    .tint(StackTheme.secondaryText)
                                     .scaleEffect(0.75)
                             } else {
                                 Text("Restore purchases")
                             }
                         }
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(StackTheme.tertiaryText)
+                        .font(StackTypography.callout)
+                        .foregroundStyle(StackTheme.secondaryText)
                         .padding(.vertical, 12)
                     }
                     .disabled(isPurchasing || isRestoring)
@@ -116,8 +116,8 @@ struct PaywallView: View {
 
                     if let error = errorMessage {
                         Text(error)
-                            .font(.system(size: 12, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .font(StackTypography.caption)
+                            .foregroundStyle(StackTheme.secondaryText)
                             .padding(.top, 8)
                     }
 
@@ -127,8 +127,8 @@ struct PaywallView: View {
                         Link("Privacy Policy", destination: URL(string: "https://stack.twohundred.ai/privacy.html")!)
                             .underline()
                     }
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(StackTheme.tertiaryText)
+                    .font(StackTypography.caption)
+                    .foregroundStyle(StackTheme.secondaryText)
                     .padding(.top, 16)
                 }
                 .padding(.horizontal, 28)
@@ -137,6 +137,19 @@ struct PaywallView: View {
         }
         .task {
             await loadOffering()
+        }
+    }
+
+    private func featureRow(icon: String, text: String) -> some View {
+        HStack(spacing: 14) {
+            Image(systemName: icon)
+                .font(.system(size: 16, weight: .regular))
+                .foregroundStyle(StackTheme.gold)
+                .frame(width: 24)
+            Text(text)
+                .font(StackTypography.body)
+                .foregroundStyle(StackTheme.primaryText)
+            Spacer()
         }
     }
 
