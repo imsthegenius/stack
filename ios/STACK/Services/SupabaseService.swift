@@ -62,29 +62,61 @@ class SupabaseService {
         await fetchRelayMessage(targetDay: milestone)
     }
 
-    // MARK: - Submit (v2)
+    // MARK: - Submit (v2 — rate-limited via RPC)
+
+    enum RelaySubmitError: LocalizedError {
+        case notAuthenticated
+        case duplicateTargetDay
+        case rateLimitExceeded
+        case invalidTextLength
+        case serverError(String)
+
+        var errorDescription: String? {
+            switch self {
+            case .notAuthenticated: return "Sign in to leave a relay message."
+            case .duplicateTargetDay: return "You've already left a message for this milestone."
+            case .rateLimitExceeded: return "You can submit up to 5 messages per day."
+            case .invalidTextLength: return "Message must be between 10 and 500 characters."
+            case .serverError(let msg): return msg
+            }
+        }
+    }
 
     func submitRelayMessage(text: String, targetDay: Int, writerDay: Int) async throws {
-        guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/relay_messages") else {
+        guard let url = URL(string: "\(Self.supabaseURL)/rest/v1/rpc/submit_relay_message") else {
             throw URLError(.badURL)
+        }
+
+        guard let authToken = AuthService.shared.accessToken else {
+            throw RelaySubmitError.notAuthenticated
         }
 
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
-        applyHeaders(to: &request)
-        request.setValue("return=minimal", forHTTPHeaderField: "Prefer")
+        applyAuthHeaders(to: &request, token: authToken)
 
         let body: [String: Any] = [
-            "target_day": targetDay,
-            "writer_day": writerDay,
-            "text": text,
-            "is_seed": false
+            "p_text": text,
+            "p_target_day": targetDay,
+            "p_writer_day": writerDay
         ]
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
-        let (_, response) = try await session.data(for: request)
+        let (data, response) = try await session.data(for: request)
         guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
             throw URLError(.badServerResponse)
+        }
+
+        if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
+           let ok = json["ok"] as? Bool, !ok,
+           let error = json["error"] as? String {
+            switch error {
+            case "AUTHENTICATION_REQUIRED": throw RelaySubmitError.notAuthenticated
+            case "DUPLICATE_TARGET_DAY": throw RelaySubmitError.duplicateTargetDay
+            case "RATE_LIMIT_EXCEEDED": throw RelaySubmitError.rateLimitExceeded
+            case "INVALID_TEXT_LENGTH": throw RelaySubmitError.invalidTextLength
+            default: throw RelaySubmitError.serverError(error)
+            }
         }
     }
 
