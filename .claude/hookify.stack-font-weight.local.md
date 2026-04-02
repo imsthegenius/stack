@@ -8,7 +8,7 @@ conditions:
     pattern: \.swift$
   - field: new_text
     operator: regex_match
-    pattern: weight:\s*\.(bold|semibold|heavy|black)|\.fontWeight\(\.(bold|semibold|heavy|black)\)
+    pattern: weight:\s*\.(thin|bold|semibold|heavy|black)|\.fontWeight\(\.(thin|bold|semibold|heavy|black)\)
 action: block
 ---
 

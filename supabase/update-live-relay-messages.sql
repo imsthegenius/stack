@@ -2,6 +2,8 @@
 -- Run against: wfckqpnxnzzwbgbthtsb (Stack project)
 -- Executed: 2026-04-02
 
+BEGIN;
+
 -- Day 1: 'craving' → 'urge'
 UPDATE relay_messages
 SET text = 'The hardest part wasn''t the urge. It was the empty space where the habit used to be. I didn''t know what to do with my hands.'
@@ -26,6 +28,8 @@ WHERE id = 'd0a2d8d5-ed61-419e-8039-5a9c38cf379c';
 UPDATE relay_messages
 SET text = 'Five months in, the identity shifted. I stopped being someone who was working on it and started being someone who just is. That shift is permanent.'
 WHERE id = 'aeea5c7f-4010-49ca-b5d1-5e4c3857ab1e';
+
+COMMIT;
 
 -- Verification: should return 0 rows
 SELECT id, target_day, text FROM relay_messages

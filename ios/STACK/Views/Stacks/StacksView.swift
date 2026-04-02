@@ -149,7 +149,7 @@ struct StacksView: View {
         .background(StackTheme.ghost.opacity(0.3))
         .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
         .allowsHitTesting(false)
-        .opacity(listAppeared ? 0.7 : 0.0)
+        .opacity(listAppeared ? 1.0 : 0.0)
         .offset(y: listAppeared ? 0 : 6)
         .animation(
             reduceMotion ? nil : StackAnimation.cardEntrance.delay(Double(index) * StackAnimation.stagger),

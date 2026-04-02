@@ -170,16 +170,21 @@ struct MilestoneMomentView: View {
                 Circle()
                     .fill(StackTheme.tertiaryText)
                     .frame(width: 6, height: 6)
-                    .opacity(loadingDotPhase ? 1.0 : 0.3)
+                    .opacity(reduceMotion ? 1.0 : (loadingDotPhase ? 1.0 : 0.3))
                     .animation(
-                        .easeInOut(duration: 0.6)
-                            .repeatForever(autoreverses: true)
-                            .delay(Double(i) * 0.2),
+                        reduceMotion ? nil :
+                            .easeInOut(duration: 0.6)
+                                .repeatForever(autoreverses: true)
+                                .delay(Double(i) * 0.2),
                         value: loadingDotPhase
                     )
             }
         }
-        .onAppear { loadingDotPhase = true }
+        .onAppear {
+            if !reduceMotion {
+                loadingDotPhase = true
+            }
+        }
     }
 
     private func paidMessageView(message: RelayMessage) -> some View {
