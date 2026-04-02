@@ -32,6 +32,7 @@ struct RelayWriteView: View {
                             .foregroundStyle(StackTheme.tertiaryText)
                             .padding(12)
                     }
+                    .accessibilityLabel("Close")
                     .padding(.trailing, 16)
                 }
                 .padding(.top, 8)
@@ -118,13 +119,13 @@ struct RelayWriteView: View {
 
                 if showFilterError {
                     Text("Your message couldn't be sent. Please revise it.")
-                        .font(.system(size: 12, weight: .regular))
+                        .font(StackTypography.caption)
                         .foregroundStyle(StackTheme.tertiaryText)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 10)
                 } else if showError {
                     Text("Something went wrong. Try again.")
-                        .font(.system(size: 12, weight: .regular))
+                        .font(StackTypography.caption)
                         .foregroundStyle(StackTheme.tertiaryText)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 10)
@@ -162,7 +163,7 @@ struct RelayWriteView: View {
 
         do {
             try await SupabaseService.shared.submitRelayMessage(text: trimmed, targetDay: targetDay, writerDay: writerDay)
-            withAnimation(.easeInOut(duration: 0.4)) {
+            withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.4)) {
                 sentForward = true
             }
             try? await Task.sleep(nanoseconds: 2_000_000_000)
