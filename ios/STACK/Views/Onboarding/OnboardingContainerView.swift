@@ -97,6 +97,7 @@ struct OnboardingContainerView: View {
                         .padding(16)
                         .contentShape(Rectangle())
                 }
+                .accessibilityLabel("Back")
                 .padding(.top, 8)
             }
         }

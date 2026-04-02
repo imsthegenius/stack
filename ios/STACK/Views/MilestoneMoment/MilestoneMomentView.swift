@@ -234,7 +234,7 @@ struct MilestoneMomentView: View {
                     Text("Write one for the next person")
                         .font(.system(size: 13, weight: .medium))
                     Image(systemName: "chevron.right")
-                        .font(.system(size: 10, weight: .medium))
+                        .font(.system(size: 11, weight: .regular))
                 }
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 14)
@@ -299,7 +299,7 @@ struct MilestoneMomentView: View {
             .padding(.top, 20)
 
             Text("One time. No subscription.")
-                .font(.system(size: 12, weight: .regular))
+                .font(StackTypography.caption)
                 .foregroundStyle(StackTheme.tertiaryText)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 10)
@@ -345,6 +345,6 @@ struct MilestoneMomentView: View {
         try? await SupabaseService.shared.reportRelayMessage(id: message.id)
         store.blockedRelayMessageIDs.append(message.id)
         store.save()
-        withAnimation { reportedMessage = true }
+        withAnimation(reduceMotion ? .none : .default) { reportedMessage = true }
     }
 }

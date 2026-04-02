@@ -45,11 +45,11 @@ struct StackCardView: View {
                 if let info = store.earnedDate(for: milestoneDays) {
                     VStack(spacing: 4) {
                         Text("Since \(StackDateFormatter.string(from: info.chapter.startDate))")
-                            .font(.system(size: 12, weight: .regular))
+                            .font(StackTypography.caption)
                             .foregroundStyle(StackTheme.tertiaryText)
 
                         Text("CHAPTER \(info.chapter.chapterNumber)")
-                            .font(.system(size: 12, weight: .regular))
+                            .font(StackTypography.caption)
                             .tracking(1.5)
                             .foregroundStyle(StackTheme.tertiaryText)
                     }

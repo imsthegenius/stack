@@ -48,9 +48,9 @@ enum StackTypography {
     static let callout = Font.system(size: 15, weight: .regular)
     static let cta = Font.system(size: 15, weight: .medium)
     static let footnote = Font.system(size: 14, weight: .regular)
-    static let caption = Font.system(size: 12, weight: .regular)
-    static let overline = Font.system(size: 12, weight: .medium)
-    static let label = Font.system(size: 10, weight: .regular)
+    static let caption = Font.system(size: 13, weight: .regular)
+    static let overline = Font.system(size: 13, weight: .medium)
+    static let label = Font.system(size: 11, weight: .regular)
 }
 
 enum StackSpacing {

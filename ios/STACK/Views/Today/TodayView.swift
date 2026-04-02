@@ -343,7 +343,7 @@ struct TodayView: View {
             canSee = true
         } else {
             // Free user on paid inline relay day — show locked state
-            withAnimation(.easeIn(duration: 0.3)) {
+            withAnimation(reduceMotion ? .none : .easeIn(duration: 0.3)) {
                 showLockedRelay = true
             }
             #if DEBUG
@@ -364,7 +364,7 @@ struct TodayView: View {
         #endif
         guard let message, !store.blockedRelayMessageIDs.contains(message.id) else { return }
         inlineRelayMessage = message
-        withAnimation(.spring(duration: 0.35, bounce: 0.05)) {
+        withAnimation(reduceMotion ? .none : .spring(duration: 0.35, bounce: 0.05)) {
             showInlineRelay = true
         }
 
@@ -386,6 +386,6 @@ struct TodayView: View {
         try? await SupabaseService.shared.reportRelayMessage(id: message.id)
         store.blockedRelayMessageIDs.append(message.id)
         store.save()
-        withAnimation { inlineRelayReported = true }
+        withAnimation(reduceMotion ? .none : .default) { inlineRelayReported = true }
     }
 }

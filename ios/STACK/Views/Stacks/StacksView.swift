@@ -76,9 +76,10 @@ struct StacksView: View {
             .frame(width: 40, height: 40)
             .scaleEffect(newlyEarnedMilestone == days ? 1.12 : 1.0)
             .animation(
-                newlyEarnedMilestone == days
-                    ? .spring(duration: 0.3, bounce: 0.5).repeatCount(2, autoreverses: true)
-                    : .default,
+                reduceMotion ? nil :
+                    (newlyEarnedMilestone == days
+                        ? .spring(duration: 0.3, bounce: 0.5).repeatCount(2, autoreverses: true)
+                        : .default),
                 value: newlyEarnedMilestone
             )
 
