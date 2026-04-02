@@ -12,14 +12,14 @@ struct StacksView: View {
         NavigationStack {
             ScrollView {
                 Text("Stacks")
-                    .font(.system(size: 34, weight: .light))
+                    .font(StackTypography.title)
                     .foregroundStyle(StackTheme.primaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 28)
                     .padding(.top, 16)
                     .padding(.bottom, 8)
 
-                LazyVStack(spacing: 0) {
+                LazyVStack(spacing: 12) {
                     ForEach(Array(Milestone.allDays.enumerated()), id: \.element) { index, days in
                         let earned = store.currentDays >= days
                         if earned {
@@ -28,17 +28,13 @@ struct StacksView: View {
                             } label: {
                                 earnedRow(days: days, index: index)
                             }
+                            .buttonStyle(PressScaleButtonStyle())
                         } else {
                             lockedRow(days: days, index: index)
                         }
-
-                        if days != Milestone.allDays.last {
-                            StackTheme.separator
-                                .frame(height: 0.5)
-                                .padding(.leading, 80)
-                        }
                     }
                 }
+                .padding(.horizontal, 20)
                 .padding(.vertical, 8)
             }
             .background(StackTheme.background)
@@ -50,14 +46,11 @@ struct StacksView: View {
             }
             .onAppear {
                 listAppeared = true
-                // Detect if a new milestone was earned since last visit
                 let currentDays = store.currentDays
                 if currentDays > lastSeenEarnedMilestone {
-                    // Find the highest milestone just crossed
                     let justEarned = Milestone.allDays.last { $0 <= currentDays && $0 > lastSeenEarnedMilestone }
                     if let earned = justEarned {
                         newlyEarnedMilestone = earned
-                        // Clear after the bounce completes
                         Task {
                             try? await Task.sleep(nanoseconds: 1_500_000_000)
                             newlyEarnedMilestone = nil
@@ -73,12 +66,12 @@ struct StacksView: View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .stroke(Color(hex: "C8A96E"), lineWidth: 1.5)
-                    .frame(width: 40, height: 40)
-
+                    .fill(StackTheme.gold.opacity(0.1))
+                Circle()
+                    .stroke(StackTheme.gold, lineWidth: 1.5)
                 Text(Milestone.shortLabel(for: days))
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(Color(hex: "C8A96E"))
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.gold)
             }
             .frame(width: 40, height: 40)
             .scaleEffect(newlyEarnedMilestone == days ? 1.12 : 1.0)
@@ -92,19 +85,19 @@ struct StacksView: View {
             VStack(alignment: .leading, spacing: 2) {
                 HStack(spacing: 6) {
                     Text(Milestone.label(for: days) ?? "")
-                        .font(.system(size: 16, weight: .regular))
+                        .font(.system(size: 16, weight: .medium))
                         .foregroundStyle(StackTheme.primaryText)
 
                     if !store.receivedRelayDays.contains(days) {
                         Circle()
-                            .fill(Color(hex: "C8A96E"))
-                            .frame(width: 4, height: 4)
+                            .fill(StackTheme.gold)
+                            .frame(width: 5, height: 5)
                     }
                 }
 
                 if let info = store.earnedDate(for: days) {
                     Text("\(StackDateFormatter.string(from: info.date)) · Chapter \(info.chapter.chapterNumber)")
-                        .font(.system(size: 12, weight: .regular))
+                        .font(StackTypography.caption)
                         .foregroundStyle(StackTheme.tertiaryText)
                 }
             }
@@ -115,13 +108,19 @@ struct StacksView: View {
                 .font(.system(size: 12, weight: .regular))
                 .foregroundStyle(StackTheme.tertiaryText)
         }
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 20)
         .padding(.vertical, 16)
+        .background(StackTheme.cardBackground)
+        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
+                .stroke(StackTheme.cardBorder, lineWidth: 1.0)
+        )
         .contentShape(Rectangle())
         .opacity(listAppeared ? 1.0 : 0.0)
         .offset(y: listAppeared ? 0 : 6)
         .animation(
-            reduceMotion ? nil : .easeOut(duration: 0.35).delay(Double(index) * StackAnimation.stagger),
+            reduceMotion ? nil : StackAnimation.cardEntrance.delay(Double(index) * StackAnimation.stagger),
             value: listAppeared
         )
     }
@@ -134,24 +133,26 @@ struct StacksView: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text(Milestone.label(for: days) ?? "")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(StackTypography.body)
                     .foregroundStyle(StackTheme.tertiaryText)
 
                 let remaining = Milestone.daysUntil(from: store.currentDays, to: days)
                 Text("In \(remaining) days")
-                    .font(.system(size: 12, weight: .regular))
+                    .font(StackTypography.caption)
                     .foregroundStyle(StackTheme.tertiaryText)
             }
 
             Spacer()
         }
-        .padding(.horizontal, 28)
+        .padding(.horizontal, 20)
         .padding(.vertical, 16)
+        .background(StackTheme.ghost.opacity(0.3))
+        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
         .allowsHitTesting(false)
         .opacity(listAppeared ? 1.0 : 0.0)
         .offset(y: listAppeared ? 0 : 6)
         .animation(
-            reduceMotion ? nil : .easeOut(duration: 0.35).delay(Double(index) * StackAnimation.stagger),
+            reduceMotion ? nil : StackAnimation.cardEntrance.delay(Double(index) * StackAnimation.stagger),
             value: listAppeared
         )
     }

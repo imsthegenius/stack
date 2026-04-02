@@ -37,7 +37,7 @@ struct RelayWriteView: View {
                 .padding(.top, 8)
 
                 Text(writePrompt)
-                    .font(.system(size: 16, weight: .regular))
+                    .font(StackTypography.body)
                     .foregroundStyle(StackTheme.secondaryText)
                     .padding(.horizontal, 28)
                     .padding(.top, 12)
@@ -60,9 +60,13 @@ struct RelayWriteView: View {
                             }
                         }
                 }
-                .padding(12)
-                .background(StackTheme.ghost)
-                .clipShape(RoundedRectangle(cornerRadius: 8))
+                .padding(16)
+                .background(StackTheme.cardBackground)
+                .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadius))
+                .overlay(
+                    RoundedRectangle(cornerRadius: StackTheme.cardRadius)
+                        .stroke(StackTheme.cardBorder, lineWidth: 1.0)
+                )
                 .padding(.horizontal, 28)
                 .padding(.top, 24)
                 .frame(minHeight: 200)
@@ -70,8 +74,12 @@ struct RelayWriteView: View {
                 .animation(reduceMotion ? .none : .easeOut(duration: 0.3), value: sentForward)
 
                 Text("\(maxLength - messageText.count)")
-                    .font(.system(size: 12, weight: .regular))
-                    .foregroundStyle(StackTheme.tertiaryText)
+                    .font(StackTypography.caption)
+                    .foregroundStyle(
+                        (maxLength - messageText.count) < 50
+                            ? StackTheme.gold
+                            : StackTheme.tertiaryText
+                    )
                     .frame(maxWidth: .infinity, alignment: .trailing)
                     .padding(.horizontal, 28)
                     .padding(.top, 8)
@@ -83,25 +91,28 @@ struct RelayWriteView: View {
                 } label: {
                     Group {
                         if sentForward {
-                            Text("Sent forward.")
+                            HStack(spacing: 6) {
+                                Image(systemName: "checkmark")
+                                    .font(.system(size: 13, weight: .medium))
+                                Text("Sent forward.")
+                            }
                         } else if isSubmitting {
                             ProgressView()
-                                .tint(StackTheme.primaryText)
+                                .tint(StackTheme.background)
                         } else {
                             Text("Send forward")
                         }
                     }
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(StackTheme.primaryText)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(StackTheme.separator)
-                    .clipShape(RoundedRectangle(cornerRadius: 12))
                 }
+                .buttonStyle(GoldCTAButtonStyle())
                 .disabled(
                     isSubmitting ||
                     messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
                     sentForward
+                )
+                .opacity(
+                    (isSubmitting || messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || sentForward)
+                    ? 0.5 : 1.0
                 )
                 .padding(.horizontal, 28)
 

@@ -1,24 +1,5 @@
 import SwiftUI
 
-// MARK: - Press-scale ButtonStyle for CTAs
-
-struct StackPressButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.98 : 1.0)
-            .animation(.spring(duration: 0.2, bounce: 0), value: configuration.isPressed)
-    }
-}
-
-// MARK: - Entrance animation helper
-
-private extension View {
-    func entranceAnimation(visible: Bool) -> some View {
-        self
-            .opacity(visible ? 1 : 0)
-            .offset(y: visible ? 0 : 10)
-    }
-}
 
 struct OnboardingContainerView: View {
     let store: StackStore
@@ -62,7 +43,7 @@ struct OnboardingContainerView: View {
             StackTheme.background.ignoresSafeArea()
 
             VStack(spacing: 0) {
-                Spacer()
+                Spacer().frame(minHeight: 60)
 
                 Group {
                     switch currentPage {
@@ -83,18 +64,11 @@ struct OnboardingContainerView: View {
                 .transition(.opacity)
 
                 Spacer()
+                Spacer()
 
                 if currentPage < 3 {
-                    VStack(spacing: 12) {
-                        if currentPage < 2 {
-                            Text("swipe")
-                                .font(.system(size: 12, weight: .regular))
-                                .tracking(3)
-                                .foregroundStyle(StackTheme.tertiaryText)
-                        }
-                        pageIndicator
-                    }
-                    .padding(.bottom, 48)
+                    pageIndicator
+                        .padding(.bottom, 48)
                 }
             }
             .task(id: currentPage) {
@@ -119,7 +93,7 @@ struct OnboardingContainerView: View {
                 } label: {
                     Image(systemName: "chevron.left")
                         .font(.system(size: 17, weight: .regular))
-                        .foregroundStyle(StackTheme.tertiaryText)
+                        .foregroundStyle(StackTheme.secondaryText)
                         .padding(16)
                         .contentShape(Rectangle())
                 }
@@ -132,8 +106,8 @@ struct OnboardingContainerView: View {
                     withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage = 3 }
                 } label: {
                     Text("Skip")
-                        .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(StackTheme.tertiaryText)
+                        .font(StackTypography.body)
+                        .foregroundStyle(StackTheme.secondaryText)
                         .padding(16)
                         .contentShape(Rectangle())
                 }
@@ -159,21 +133,32 @@ struct OnboardingContainerView: View {
     private var screen1: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Every day counts.")
-                .font(.system(size: 42, weight: .light))
+                .font(.system(size: 42, weight: .regular))
                 .foregroundStyle(StackTheme.primaryText)
                 .entranceAnimation(visible: visibleElements >= 1)
 
-            Text("Whether this is Day 1 or Day 847 — nothing disappears.")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(StackTheme.secondaryText)
+            Text("Whether this is Day 1 or Day 847, nothing disappears.")
+                .font(.system(size: 19, weight: .regular))
+                .foregroundStyle(StackTheme.primaryText)
                 .padding(.top, 24)
                 .entranceAnimation(visible: visibleElements >= 2)
 
             Text("Nothing resets. It all stacks.")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(StackTheme.secondaryText)
+                .font(.system(size: 19, weight: .regular))
+                .foregroundStyle(StackTheme.primaryText)
                 .padding(.top, 16)
                 .entranceAnimation(visible: visibleElements >= 2)
+
+            ZStack {
+                Circle()
+                    .stroke(StackTheme.primaryText, lineWidth: 1.5)
+                    .frame(width: 80, height: 80)
+                Text("14")
+                    .font(.system(size: 36, weight: .light))
+                    .foregroundStyle(StackTheme.primaryText)
+            }
+            .padding(.top, 48)
+            .entranceAnimation(visible: visibleElements >= 3)
 
             Spacer()
 
@@ -182,10 +167,15 @@ struct OnboardingContainerView: View {
                 store.save()
             } label: {
                 Text("I already have an account")
-                    .font(.system(size: 13, weight: .regular))
-                    .foregroundStyle(StackTheme.tertiaryText)
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.secondaryText)
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 14)
+                    .background(StackTheme.cardBackground)
+                    .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
+                    .overlay(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall).stroke(StackTheme.cardBorder, lineWidth: 1.0))
             }
-            .frame(maxWidth: .infinity)
+            .buttonStyle(PressScaleButtonStyle())
             .padding(.bottom, 24)
             .entranceAnimation(visible: visibleElements >= 3)
         }
@@ -197,30 +187,36 @@ struct OnboardingContainerView: View {
     private var screen2: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("No resets. Ever.")
-                .font(.system(size: 42, weight: .light))
+                .font(.system(size: 42, weight: .regular))
                 .foregroundStyle(StackTheme.primaryText)
                 .entranceAnimation(visible: visibleElements >= 1)
 
             Text("Other counters start you back at zero.")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(StackTheme.secondaryText)
+                .font(.system(size: 19, weight: .regular))
+                .foregroundStyle(StackTheme.primaryText)
                 .padding(.top, 24)
                 .entranceAnimation(visible: visibleElements >= 2)
 
             Text("STACK keeps everything. Every chapter stays.")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(StackTheme.secondaryText)
+                .font(.system(size: 19, weight: .regular))
+                .foregroundStyle(StackTheme.primaryText)
                 .padding(.top, 16)
                 .entranceAnimation(visible: visibleElements >= 2)
 
-            VStack(alignment: .leading, spacing: 4) {
-                Text("Chapter 1  ·  127 days  ·  Mar 2023 – Jul 2023")
-                Text("Chapter 2  ·  currently at Day 847")
-                StackTheme.separator.frame(height: 0.5).padding(.vertical, 4)
-                Text("974 days stacked")
+            StackCard(padding: 16, radius: StackTheme.cardRadiusSmall) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Chapter 1  ·  127 days  ·  Mar–Jul 2023")
+                        .font(StackTypography.footnote)
+                        .foregroundStyle(StackTheme.tertiaryText)
+                    Text("Chapter 2  ·  currently at Day 847")
+                        .font(StackTypography.footnote)
+                        .foregroundStyle(StackTheme.secondaryText)
+                    StackTheme.separator.frame(height: 0.5).padding(.vertical, 2)
+                    Text("974 days stacked")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundStyle(StackTheme.secondaryText)
+                }
             }
-            .font(.system(size: 13, weight: .regular))
-            .foregroundStyle(StackTheme.tertiaryText)
             .padding(.top, 32)
             .entranceAnimation(visible: visibleElements >= 3)
         }
@@ -232,32 +228,46 @@ struct OnboardingContainerView: View {
     private var screen3: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Messages at milestones.")
-                .font(.system(size: 42, weight: .light))
+                .font(.system(size: 42, weight: .regular))
                 .foregroundStyle(StackTheme.primaryText)
                 .entranceAnimation(visible: visibleElements >= 1)
 
             Text("At certain days, a short anonymous message appears.")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(StackTheme.secondaryText)
+                .font(.system(size: 19, weight: .regular))
+                .foregroundStyle(StackTheme.primaryText)
                 .padding(.top, 24)
                 .entranceAnimation(visible: visibleElements >= 2)
 
             Text("Written by someone who reached that number before you.")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(StackTheme.secondaryText)
+                .font(.system(size: 19, weight: .regular))
+                .foregroundStyle(StackTheme.primaryText)
                 .padding(.top, 16)
                 .entranceAnimation(visible: visibleElements >= 2)
 
             Text("When you're ready, you leave one for the next person.")
-                .font(.system(size: 17, weight: .regular))
-                .foregroundStyle(StackTheme.secondaryText)
+                .font(.system(size: 19, weight: .regular))
+                .foregroundStyle(StackTheme.primaryText)
                 .padding(.top, 16)
                 .entranceAnimation(visible: visibleElements >= 2)
 
+            StackCard(padding: 20, radius: StackTheme.cardRadiusSmall) {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("The first month is a wall. The second is a door.")
+                        .font(Font.custom("Georgia", size: 17))
+                        .foregroundStyle(StackTheme.primaryText)
+                        .lineSpacing(5)
+                    Text("— from day 47")
+                        .font(StackTypography.caption)
+                        .foregroundStyle(StackTheme.tertiaryText)
+                }
+            }
+            .padding(.top, 24)
+            .entranceAnimation(visible: visibleElements >= 3)
+
             Text("Your first week of messages is free. After that, one payment unlocks the relay forever.")
-                .font(.system(size: 15, weight: .regular))
+                .font(StackTypography.callout)
                 .foregroundStyle(StackTheme.tertiaryText)
-                .padding(.top, 24)
+                .padding(.top, 16)
                 .entranceAnimation(visible: visibleElements >= 3)
         }
         .padding(.horizontal, 28)
@@ -268,7 +278,7 @@ struct OnboardingContainerView: View {
     private var screen4: some View {
         VStack(alignment: .leading, spacing: 0) {
             Text("Where are you?")
-                .font(.system(size: 42, weight: .light))
+                .font(.system(size: 42, weight: .regular))
                 .foregroundStyle(StackTheme.primaryText)
                 .entranceAnimation(visible: visibleElements >= 1)
 
@@ -279,14 +289,14 @@ struct OnboardingContainerView: View {
                 withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage = 4 }
             } label: {
                 Text("Starting today")
-                    .font(.system(size: 15, weight: .regular))
+                    .font(StackTypography.cta)
                     .foregroundStyle(StackTheme.background)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
                     .background(StackTheme.primaryText)
-                    .clipShape(.rect(cornerRadius: 12))
+                    .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
             }
-            .buttonStyle(StackPressButtonStyle())
+            .buttonStyle(PressScaleButtonStyle())
             .entranceAnimation(visible: visibleElements >= 2)
 
             Button {
@@ -294,14 +304,15 @@ struct OnboardingContainerView: View {
                 withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage = 4 }
             } label: {
                 Text("I'm already counting")
-                    .font(.system(size: 15, weight: .regular))
+                    .font(StackTypography.callout)
                     .foregroundStyle(StackTheme.secondaryText)
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 16)
-                    .background(StackTheme.separator)
-                    .clipShape(.rect(cornerRadius: 12))
+                    .background(StackTheme.cardBackground)
+                    .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
+                    .overlay(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall).stroke(StackTheme.cardBorder, lineWidth: 1.0))
             }
-            .buttonStyle(StackPressButtonStyle())
+            .buttonStyle(PressScaleButtonStyle())
             .padding(.top, 16)
             .entranceAnimation(visible: visibleElements >= 3)
         }
@@ -316,11 +327,11 @@ struct OnboardingContainerView: View {
                 let dayCount = max(1, (Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: date), to: Calendar.current.startOfDay(for: Date())).day ?? 0) + 1)
 
                 Text("Starting from \(Self.formatDate(date)).")
-                    .font(.system(size: 34, weight: .light))
+                    .font(.system(size: 34, weight: .regular))
                     .foregroundStyle(StackTheme.primaryText)
 
                 Text("Day \(dayCount).")
-                    .font(.system(size: 34, weight: .light))
+                    .font(.system(size: 34, weight: .regular))
                     .foregroundStyle(StackTheme.primaryText)
                     .padding(.top, 8)
 
@@ -334,14 +345,14 @@ struct OnboardingContainerView: View {
                     store.createInitialChapter(startDate: startDate)
                 } label: {
                     Text("Let's go")
-                        .font(.system(size: 15, weight: .regular))
+                        .font(StackTypography.cta)
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(StackTheme.primaryText)
-                        .clipShape(.rect(cornerRadius: 12))
+                        .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
                 }
-                .buttonStyle(StackPressButtonStyle())
+                .buttonStyle(PressScaleButtonStyle())
 
                 Button {
                     withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { showConfirmation = false }
@@ -355,13 +366,13 @@ struct OnboardingContainerView: View {
                 .padding(.top, 8)
             } else {
                 Text("When did your current chapter begin?")
-                    .font(.system(size: 34, weight: .light))
+                    .font(.system(size: 34, weight: .regular))
                     .foregroundStyle(StackTheme.primaryText)
                     .entranceAnimation(visible: visibleElements >= 1)
 
                 Text("Or tap below if today is Day 1.")
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundStyle(StackTheme.secondaryText)
+                    .font(.system(size: 17, weight: .regular))
+                    .foregroundStyle(StackTheme.primaryText)
                     .padding(.top, 8)
                     .entranceAnimation(visible: visibleElements >= 1)
 
@@ -380,19 +391,19 @@ struct OnboardingContainerView: View {
                 } label: {
                     let isToday = Calendar.current.isDateInToday(selectedDate)
                     Text(isToday ? "This is Day 1" : "Start from \(Self.formatDate(selectedDate))")
-                        .font(.system(size: 15, weight: .regular))
+                        .font(StackTypography.cta)
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(StackTheme.primaryText)
-                        .clipShape(.rect(cornerRadius: 12))
+                        .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
                 }
-                .buttonStyle(StackPressButtonStyle())
+                .buttonStyle(PressScaleButtonStyle())
                 .padding(.top, 24)
                 .entranceAnimation(visible: visibleElements >= 3)
 
                 Text("Sign in after setup to back up your progress.")
-                    .font(.system(size: 12, weight: .regular))
+                    .font(StackTypography.caption)
                     .foregroundStyle(StackTheme.tertiaryText)
                     .multilineTextAlignment(.leading)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -421,12 +432,12 @@ struct OnboardingContainerView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Let's bring it all.")
-                    .font(.system(size: 34, weight: .light))
+                    .font(.system(size: 34, weight: .regular))
                     .foregroundStyle(StackTheme.primaryText)
                     .entranceAnimation(visible: visibleElements >= 1)
 
                 Text("CURRENT CHAPTER")
-                    .font(.system(size: 12, weight: .regular))
+                    .font(StackTypography.overline)
                     .tracking(1.5)
                     .foregroundStyle(StackTheme.tertiaryText)
                     .padding(.top, 24)
@@ -463,7 +474,7 @@ struct OnboardingContainerView: View {
 
                 if showHistory {
                     Text("PREVIOUS CHAPTERS")
-                        .font(.system(size: 12, weight: .regular))
+                        .font(StackTypography.overline)
                         .tracking(1.5)
                         .foregroundStyle(StackTheme.tertiaryText)
                         .padding(.top, 24)
@@ -497,22 +508,24 @@ struct OnboardingContainerView: View {
                     .padding(.top, 12)
                 }
 
-                historyPreview
-                    .padding(.top, 32)
-                    .entranceAnimation(visible: visibleElements >= 2)
+                StackCard(padding: 16, radius: StackTheme.cardRadiusSmall) {
+                    historyPreview
+                }
+                .padding(.top, 32)
+                .entranceAnimation(visible: visibleElements >= 2)
 
                 Button {
                     showHistorySummary = true
                 } label: {
                     Text("Start stacking")
-                        .font(.system(size: 15, weight: .regular))
+                        .font(StackTypography.cta)
                         .foregroundStyle(StackTheme.background)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 16)
                         .background(currentStartOverlapMessage == nil ? StackTheme.primaryText : StackTheme.ghost)
-                        .clipShape(.rect(cornerRadius: 12))
+                        .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
                 }
-                .buttonStyle(StackPressButtonStyle())
+                .buttonStyle(PressScaleButtonStyle())
                 .disabled(currentStartOverlapMessage != nil)
                 .padding(.top, 24)
                 .padding(.bottom, 48)

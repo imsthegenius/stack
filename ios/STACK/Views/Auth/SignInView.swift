@@ -16,16 +16,26 @@ struct SignInView: View {
 
                 VStack(alignment: .leading, spacing: 0) {
                     Text("Keep your\nprogress safe.")
-                        .font(.system(size: 42, weight: .light))
+                        .font(.system(size: 42, weight: .regular))
                         .foregroundStyle(StackTheme.primaryText)
 
                     Text("Sign in so your days survive phone switches, reinstalls, and upgrades.")
                         .font(.system(size: 17, weight: .regular))
-                        .foregroundStyle(StackTheme.secondaryText)
+                        .foregroundStyle(StackTheme.primaryText)
                         .padding(.top, 24)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 28)
+
+                StackCard(padding: 20, radius: StackTheme.cardRadiusSmall) {
+                    VStack(alignment: .leading, spacing: 16) {
+                        signInFeatureLine(icon: "icloud", text: "Syncs across all your devices")
+                        signInFeatureLine(icon: "arrow.clockwise", text: "Survives reinstalls and upgrades")
+                        signInFeatureLine(icon: "lock.shield", text: "Private and secure")
+                    }
+                }
+                .padding(.horizontal, 28)
+                .padding(.top, 32)
 
                 Spacer()
 
@@ -49,8 +59,8 @@ struct SignInView: View {
 
                     if let error = errorMessage {
                         Text(error)
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .font(StackTypography.footnote)
+                            .foregroundStyle(StackTheme.secondaryText)
                     }
 
                     #if DEBUG
@@ -67,6 +77,18 @@ struct SignInView: View {
                 .padding(.horizontal, 28)
                 .padding(.bottom, 60)
             }
+        }
+    }
+
+    private func signInFeatureLine(icon: String, text: String) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.system(size: 14, weight: .regular))
+                .foregroundStyle(StackTheme.secondaryText)
+                .frame(width: 20)
+            Text(text)
+                .font(StackTypography.callout)
+                .foregroundStyle(StackTheme.primaryText)
         }
     }
 

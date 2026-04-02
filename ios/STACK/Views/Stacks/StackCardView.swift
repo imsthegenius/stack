@@ -32,13 +32,13 @@ struct StackCardView: View {
                     .frame(width: 128, height: 128)
 
                 Text(milestoneLabel.uppercased())
-                    .font(.system(size: 22, weight: .light))
+                    .font(StackTypography.headline)
                     .tracking(2)
                     .foregroundStyle(StackTheme.primaryText)
                     .padding(.top, 28)
 
                 Text("One at a time.")
-                    .font(.system(size: 15, weight: .regular))
+                    .font(StackTypography.callout)
                     .foregroundStyle(StackTheme.secondaryText)
                     .padding(.top, 12)
 
@@ -59,7 +59,6 @@ struct StackCardView: View {
                 Spacer()
 
                 VStack(spacing: 16) {
-                    // Read the relay — opens MilestoneMomentView for this milestone
                     if RelayPoint.relayPoint(for: milestoneDays) != nil {
                         Button {
                             showRelay = true
@@ -68,9 +67,14 @@ struct StackCardView: View {
                                 Image(systemName: "envelope")
                                     .font(.system(size: 14, weight: .regular))
                                 Text("Read the relay")
-                                    .font(.system(size: 14, weight: .regular))
+                                    .font(StackTypography.footnote)
                             }
-                            .foregroundStyle(StackTheme.secondaryText)
+                            .foregroundStyle(StackTheme.primaryText)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(StackTheme.cardBackground)
+                            .clipShape(Capsule())
+                            .overlay(Capsule().stroke(StackTheme.cardBorder, lineWidth: 1.0))
                         }
                     }
 
@@ -79,11 +83,16 @@ struct StackCardView: View {
                     } label: {
                         HStack(spacing: 6) {
                             Image(systemName: "square.and.arrow.up")
-                                .font(.system(size: 16, weight: .regular))
-                            Text("Share")
                                 .font(.system(size: 14, weight: .regular))
+                            Text("Share")
+                                .font(StackTypography.footnote)
                         }
                         .foregroundStyle(StackTheme.secondaryText)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 12)
+                        .background(StackTheme.cardBackground)
+                        .clipShape(Capsule())
+                        .overlay(Capsule().stroke(StackTheme.cardBorder, lineWidth: 1.0))
                     }
                 }
                 .padding(.bottom, 32)
@@ -102,10 +111,10 @@ struct StackCardView: View {
     private var stackCircle: some View {
         ZStack {
             Circle()
-                .stroke(StackTheme.primaryText, lineWidth: 1.5)
+                .stroke(StackTheme.primaryText, lineWidth: 2)
 
             Text(Milestone.shortLabel(for: milestoneDays))
-                .font(.system(size: 54, weight: .light))
+                .font(.system(size: 54, weight: .regular))
                 .foregroundStyle(StackTheme.primaryText)
         }
     }
@@ -132,29 +141,29 @@ struct StackExportView: View {
 
             ZStack {
                 Circle()
-                    .stroke(StackTheme.primaryText, lineWidth: 1.5)
+                    .stroke(StackTheme.primaryText, lineWidth: 2)
                     .frame(width: 128, height: 128)
 
                 Text(Milestone.shortLabel(for: milestoneDays))
-                    .font(.system(size: 54, weight: .light))
+                    .font(.system(size: 54, weight: .regular))
                     .foregroundStyle(StackTheme.primaryText)
             }
 
             Text((Milestone.label(for: milestoneDays) ?? "").uppercased())
-                .font(.system(size: 22, weight: .light))
+                .font(StackTypography.headline)
                 .tracking(2)
                 .foregroundStyle(StackTheme.primaryText)
                 .padding(.top, 28)
 
             Text("One at a time.")
-                .font(.system(size: 15, weight: .regular))
+                .font(StackTypography.callout)
                 .foregroundStyle(StackTheme.secondaryText)
                 .padding(.top, 12)
 
             Spacer()
 
             Text("STACK")
-                .font(.system(size: 12, weight: .regular))
+                .font(StackTypography.overline)
                 .tracking(2)
                 .foregroundStyle(StackTheme.tertiaryText)
                 .padding(.bottom, 24)

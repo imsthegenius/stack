@@ -68,7 +68,7 @@ These must always be in sync. If you add a relay point, add it in all three plac
 ### Relay flow
 1. Pre-pledge on relay day: nothing shown (no teasing what doesn't exist)
 2. User pledges → `relayLoading = true` → 1.5s delay
-3. During delay: "Someone left you something." shows (loading state)
+3. During delay: "Loading relay message..." shows (loading state)
 4. `showInlineRelayMessage()` fetches from Supabase → message appears in Georgia font
 5. If fetch returns nil: nothing shows. Don't tease what doesn't exist.
 6. Fullscreen relay days: MilestoneMomentView opens instead of inline

@@ -89,7 +89,7 @@ Separator:     #1C1B19  — StackTheme.separator
 ### The Relay
 - Supabase: `https://wfckqpnxnzzwbgbthtsb.supabase.co`
 - Anon key: `REPLACE_WITH_SUPABASE_ANON_KEY` (see SupabaseService.swift TODO)
-- Free tier: relay message is blurred with paywall overlay
+- Free tier: relay message is truncated to 15 words with paywall overlay
 - Paid tier: shows relay message in Georgia font
 - After receiving: `store.receivedRelayMilestoneDays.append(days)` + `store.save()`
 - Phase 2: user writes a message forward via RelayWriteView
@@ -122,6 +122,11 @@ Separator:     #1C1B19  — StackTheme.separator
 - No rounded card backgrounds in lists
 - No `.ultraThinMaterial` behind the hero counter number
 - No warm black (#0C0B09) widget backgrounds — use `.containerBackground(.clear)`
+
+## Build Command
+```bash
+xcodebuild -project ios/STACK.xcodeproj -scheme STACK -destination 'platform=iOS Simulator,name=iPhone 16 Pro Max' build
+```
 
 ## Global App Setup
 - `.preferredColorScheme(.dark)` on WindowGroup — non-negotiable
