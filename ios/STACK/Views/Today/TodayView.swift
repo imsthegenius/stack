@@ -15,6 +15,7 @@ struct TodayView: View {
     @State private var relayLoading: Bool = false
     @State private var counterDidAppear: Bool = false
     @State private var stackedTextVisible: Bool = false
+    @State private var counterPulse: Bool = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     // The relay point to pass to MilestoneMomentView (for non-milestone fullscreen days)
@@ -30,6 +31,7 @@ struct TodayView: View {
             VStack(spacing: 0) {
                 if let chapter = store.currentChapter {
                     Button {
+                        StackHaptics.tabSwitch()
                         switchToJourneyTab?()
                     } label: {
                         Text("CHAPTER \(chapter.chapterNumber)")
@@ -38,10 +40,9 @@ struct TodayView: View {
                             .foregroundStyle(StackTheme.secondaryText)
                             .padding(.horizontal, 12)
                             .padding(.vertical, 6)
-                            .background(StackTheme.cardBackground)
+                            .background(StackTheme.surface2)
                             .clipShape(Capsule())
-                            .overlay(Capsule().stroke(StackTheme.cardBorder, lineWidth: 1.0))
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .frame(maxWidth: .infinity, alignment: .center)
                             .padding(.horizontal, 28)
                             .padding(.top, 16)
                             .contentShape(Rectangle())
@@ -53,22 +54,18 @@ struct TodayView: View {
                 counterBlock
 
                 if pledgedToday && stackedTextVisible {
-                    HStack(spacing: 6) {
-                        Image(systemName: "checkmark")
-                            .font(.system(size: 13, weight: .medium))
-                        Text("Stacked.")
-                            .font(.system(size: 15, weight: .medium))
-                    }
-                    .foregroundStyle(StackTheme.primaryText)
-                    .padding(.top, 20)
-                    .transition(.opacity)
+                    Text("Stacked.")
+                        .font(StackTypography.body)
+                        .foregroundStyle(StackTheme.primaryText)
+                        .scaleEffect(stackedTextVisible ? 1.0 : 0.95)
+                        .padding(.top, 20)
+                        .transition(.opacity)
                 }
 
                 if pledgedToday && relayLoading {
-                    Text("Loading relay message...")
-                        .font(StackTypography.caption)
-                        .foregroundStyle(StackTheme.tertiaryText)
-                        .padding(.top, 12)
+                    relaySkeletonCard
+                        .padding(.horizontal, 28)
+                        .padding(.top, 20)
                         .transition(.opacity)
                 }
 
@@ -76,21 +73,21 @@ struct TodayView: View {
                 if showInlineRelay, let message = inlineRelayMessage {
                     if inlineRelayReported {
                         Text("Reported. Thank you.")
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .font(StackTypography.caption)
+                            .foregroundStyle(StackTheme.secondaryText)
                             .padding(.top, 24)
                             .transition(.opacity)
                     } else {
-                        StackCard(padding: 20, radius: StackTheme.cardRadiusSmall) {
+                        RelayCard(padding: 20) {
                             VStack(alignment: .leading, spacing: 8) {
                                 Text(message.text)
-                                    .font(Font.custom("Georgia", size: 19))
-                                    .foregroundStyle(StackTheme.secondaryText)
+                                    .font(StackTypography.relay)
+                                    .foregroundStyle(StackTheme.primaryText)
                                     .lineSpacing(5)
 
                                 Text("— from \(writerLabel(for: message))")
                                     .font(StackTypography.caption)
-                                    .foregroundStyle(StackTheme.tertiaryText)
+                                    .foregroundStyle(StackTheme.secondaryText)
                             }
                         }
                         .padding(.horizontal, 28)
@@ -108,20 +105,36 @@ struct TodayView: View {
                     }
                 }
 
-                // Locked relay state for free users on paid relay days
+                // Locked relay — frosted card with blur overlay
                 if showLockedRelay {
-                    StackCard(padding: 20, radius: StackTheme.cardRadiusSmall) {
+                    ZStack {
+                        RelayCard(padding: 20) {
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("A message is waiting for you at this milestone.")
+                                    .font(StackTypography.relay)
+                                    .foregroundStyle(StackTheme.primaryText)
+                                    .lineSpacing(5)
+                            }
+                        }
+                        .blur(radius: 6)
+
                         VStack(spacing: 14) {
-                            Text("A relay message is waiting.")
+                            Text("Unlock the relay.")
                                 .font(StackTypography.callout)
-                                .foregroundStyle(StackTheme.secondaryText)
+                                .foregroundStyle(StackTheme.primaryText)
 
                             Button {
+                                StackHaptics.cta()
                                 showPaywallSheet = true
                             } label: {
                                 Text("Unlock STACK")
                             }
-                            .buttonStyle(GoldCTAButtonStyle())
+                            .buttonStyle(EmberCTAButtonStyle())
+                            .padding(.horizontal, 40)
+
+                            Text("One time. No subscription.")
+                                .font(StackTypography.caption)
+                                .foregroundStyle(StackTheme.secondaryText)
                         }
                     }
                     .padding(.horizontal, 28)
@@ -139,24 +152,23 @@ struct TodayView: View {
                 if pledgedToday && !store.isRelayDay, let daysLeft = store.daysUntilNextRelay, daysLeft <= 7 {
                     Text("\(daysLeft) day\(daysLeft == 1 ? "" : "s") until next relay")
                         .font(StackTypography.caption)
-                        .foregroundStyle(StackTheme.tertiaryText)
+                        .foregroundStyle(StackTheme.secondaryText)
                         .padding(.top, 12)
                 }
 
                 if store.chapters.count > 1 {
                     HStack(spacing: 4) {
                         Text("\(store.totalDays)")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(StackTypography.footnote)
                             .foregroundStyle(StackTheme.secondaryText)
                         Text("days total across \(store.chapters.count) chapters")
                             .font(StackTypography.caption)
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .foregroundStyle(StackTheme.secondaryText)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
-                    .background(StackTheme.cardBackground)
+                    .background(StackTheme.surface2)
                     .clipShape(Capsule())
-                    .overlay(Capsule().stroke(StackTheme.cardBorder, lineWidth: 1.0))
                     .padding(.top, 20)
                 }
 
@@ -167,7 +179,6 @@ struct TodayView: View {
         .onAppear {
             pledgedToday = store.hasPledgedToday
             stackedTextVisible = store.hasPledgedToday
-            // Reset inline relay state when returning to this tab (e.g. after debug day picker)
             if !pledgedToday {
                 showInlineRelay = false
                 inlineRelayMessage = nil
@@ -175,14 +186,13 @@ struct TodayView: View {
                 relayLoading = false
                 inlineRelayReported = false
             }
-            // Counter entrance animation — subtle scale + fade
             if !counterDidAppear {
                 let skipMotion = reduceMotion
                 Task {
                     if !skipMotion {
                         try? await Task.sleep(nanoseconds: 100_000_000)
                     }
-                    withAnimation(skipMotion ? .none : .easeOut(duration: 0.3)) {
+                    withAnimation(skipMotion ? .none : StackAnimation.entrance) {
                         counterDidAppear = true
                     }
                 }
@@ -190,7 +200,6 @@ struct TodayView: View {
             #if DEBUG
             print("[RELAY DEBUG] onAppear — currentDays=\(store.currentDays) pledgedToday=\(pledgedToday) isRelayDay=\(store.isRelayDay) isFullscreen=\(store.isFullscreenRelayDay) receivedRelayDays=\(store.receivedRelayDays)")
             #endif
-            // Resume relay if user pledged but killed app before relay showed
             if pledgedToday && store.isRelayDay && !store.receivedRelayDays.contains(store.currentDays) {
                 if store.isFullscreenRelayDay {
                     showMilestoneMoment = true
@@ -222,16 +231,28 @@ struct TodayView: View {
         }
     }
 
+    // MARK: - Counter
+
     private var counterBlock: some View {
         VStack(spacing: 0) {
             ZStack {
+                // Radial glow behind counter on milestone days
+                if pledgedToday && store.isMilestoneDay {
+                    Circle()
+                        .fill(Color.white.opacity(0.05))
+                        .frame(width: 240, height: 240)
+                        .blur(radius: 30)
+                }
+
+                // Ghost ring
                 Circle()
                     .stroke(StackTheme.ghost, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
                     .frame(width: 200, height: 200)
 
+                // Pledge ring — ember orange
                 Circle()
                     .trim(from: 0, to: pledgedToday ? 1.0 : 0.0)
-                    .stroke(StackTheme.primaryText, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+                    .stroke(StackTheme.ember, style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
                     .rotationEffect(.degrees(-90))
                     .frame(width: 200, height: 200)
                     .animation(
@@ -239,10 +260,12 @@ struct TodayView: View {
                         value: pledgedToday
                     )
 
+                // Counter number
                 Text("\(store.currentDays)")
                     .font(StackTypography.heroCounter)
                     .foregroundStyle(store.isMilestoneDay ? StackTheme.milestoneWhite : StackTheme.primaryText)
                     .contentTransition(.numericText())
+                    .scaleEffect(counterPulse ? 1.0 : 1.0)
             }
             .frame(width: 200, height: 200)
             .scaleEffect(counterDidAppear ? 1.0 : 0.97)
@@ -252,20 +275,30 @@ struct TodayView: View {
             .accessibilityAddTraits(.isButton)
             .onTapGesture {
                 if pledgedToday {
-                    // Re-tap: open MilestoneMomentView on fullscreen relay days
                     if store.isFullscreenRelayDay || store.isMilestoneDay {
                         showMilestoneMoment = true
                     }
                     return
                 }
 
-                // Pledge — use heavier haptic on milestone days
-                let hapticStyle: UIImpactFeedbackGenerator.FeedbackStyle = store.isMilestoneDay ? .medium : .light
-                UIImpactFeedbackGenerator(style: hapticStyle).impactOccurred()
+                // Pledge haptic
+                if store.isMilestoneDay {
+                    StackHaptics.milestone()
+                } else {
+                    StackHaptics.pledge()
+                }
 
-                withAnimation(reduceMotion ? .none : .spring(duration: 0.5, bounce: 0.15)) {
+                withAnimation(reduceMotion ? .none : StackAnimation.pledgeRing) {
                     pledgedToday = true
                 }
+
+                // Counter pulse micro-animation
+                if !reduceMotion {
+                    withAnimation(.spring(duration: 0.15)) {
+                        counterPulse = true
+                    }
+                }
+
                 store.pledgeToday()
 
                 // "Stacked." delayed fade-in
@@ -274,12 +307,12 @@ struct TodayView: View {
                     if !skipMotion {
                         try? await Task.sleep(nanoseconds: 200_000_000)
                     }
-                    withAnimation(skipMotion ? .none : .easeIn(duration: 0.25)) {
+                    withAnimation(skipMotion ? .none : StackAnimation.entrance) {
                         stackedTextVisible = true
                     }
                 }
 
-                // Trigger fullscreen relay (covers milestone days + fullscreen relay days)
+                // Trigger fullscreen relay
                 if store.isFullscreenRelayDay {
                     relayTask = Task {
                         try? await Task.sleep(nanoseconds: 700_000_000)
@@ -302,7 +335,7 @@ struct TodayView: View {
 
             VStack(spacing: 6) {
                 Text("DAYS")
-                    .font(StackTypography.overline)
+                    .font(StackTypography.caption)
                     .tracking(1.5)
                     .foregroundStyle(StackTheme.secondaryText)
 
@@ -322,6 +355,20 @@ struct TodayView: View {
         }
     }
 
+    // MARK: - Skeleton relay card
+
+    private var relaySkeletonCard: some View {
+        RelayCard(padding: 20) {
+            VStack(alignment: .leading, spacing: 12) {
+                SkeletonView(height: 16)
+                SkeletonView(width: 200, height: 16)
+                SkeletonView(width: 120, height: 12)
+            }
+        }
+    }
+
+    // MARK: - Relay logic
+
     @MainActor
     private func showInlineRelayMessage() async {
         let currentDays = store.currentDays
@@ -335,15 +382,13 @@ struct TodayView: View {
             return
         }
 
-        // Determine if user can see this message
         let canSee: Bool
         if relayPoint.isFree {
             canSee = true
         } else if store.lifetimePurchased {
             canSee = true
         } else {
-            // Free user on paid inline relay day — show locked state
-            withAnimation(reduceMotion ? .none : .easeIn(duration: 0.3)) {
+            withAnimation(reduceMotion ? .none : StackAnimation.cardEntrance) {
                 showLockedRelay = true
             }
             #if DEBUG
@@ -354,7 +399,6 @@ struct TodayView: View {
 
         guard canSee else { return }
 
-        // Fetch and display (skip blocked messages)
         #if DEBUG
         print("[RELAY DEBUG] Fetching from Supabase for day \(currentDays)...")
         #endif
@@ -364,11 +408,11 @@ struct TodayView: View {
         #endif
         guard let message, !store.blockedRelayMessageIDs.contains(message.id) else { return }
         inlineRelayMessage = message
-        withAnimation(reduceMotion ? .none : .spring(duration: 0.35, bounce: 0.05)) {
+        withAnimation(reduceMotion ? .none : StackAnimation.cardEntrance) {
             showInlineRelay = true
         }
+        StackHaptics.relayArrival()
 
-        // Mark as received
         if !store.receivedRelayDays.contains(currentDays) {
             store.receivedRelayDays.append(currentDays)
             store.save()
