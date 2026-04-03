@@ -195,7 +195,7 @@ struct RelayCard<Content: View>: View {
 // MARK: - Skeleton View
 
 struct SkeletonView: View {
-    @State private var shimmerOffset: CGFloat = -1
+    @State private var shimmerOpacity: Double = 0.3
 
     var width: CGFloat = .infinity
     var height: CGFloat = 16
@@ -205,24 +205,10 @@ struct SkeletonView: View {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .fill(StackTheme.surface3)
             .frame(maxWidth: width == .infinity ? .infinity : width, minHeight: height, maxHeight: height)
-            .overlay(
-                GeometryReader { geometry in
-                    RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: [.clear, StackTheme.ghost.opacity(0.4), .clear],
-                                startPoint: .leading,
-                                endPoint: .trailing
-                            )
-                        )
-                        .offset(x: shimmerOffset * geometry.size.width)
-                }
-                .clipped()
-            )
-            .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
+            .opacity(shimmerOpacity)
             .onAppear {
-                withAnimation(.linear(duration: 1.5).repeatForever(autoreverses: false)) {
-                    shimmerOffset = 2
+                withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                    shimmerOpacity = 0.7
                 }
             }
     }
