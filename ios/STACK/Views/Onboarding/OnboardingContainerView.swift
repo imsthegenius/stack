@@ -1,11 +1,12 @@
 import SwiftUI
 
-
 struct OnboardingContainerView: View {
     let store: StackStore
+
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+
     @State private var currentPage: Int = 0
-    @State private var selectedPath: OnboardingPath?
+    @State private var selectedPath: OnboardingPath = .new
     @State private var selectedDate: Date = Date()
     @State private var showHistory: Bool = false
     @State private var previousChapters: [PreviousChapterEntry] = []
@@ -13,16 +14,39 @@ struct OnboardingContainerView: View {
     @State private var showAddChapter: Bool = false
     @State private var addChapterStart: Date = Date()
     @State private var addChapterEnd: Date = Date()
-    @State private var showConfirmation: Bool = false
-    @State private var confirmedDate: Date?
     @State private var showHistorySummary: Bool = false
     @State private var visibleElements: Int = 0
-    enum OnboardingPath {
+
+    enum OnboardingPath: CaseIterable {
         case new
         case existing
+
+        var title: String {
+            switch self {
+            case .new:
+                return "Starting today"
+            case .existing:
+                return "Already counting"
+            }
+        }
+
+        var detail: String {
+            switch self {
+            case .new:
+                return "Set the first day of this chapter."
+            case .existing:
+                return "Bring over your current and past chapters."
+            }
+        }
     }
 
-    // MARK: - Computed helpers for add-chapter validation
+    private var pageCount: Int { 4 }
+
+    private var selectableDateRange: ClosedRange<Date> {
+        let today = Calendar.current.startOfDay(for: Date())
+        let earliest = Calendar.current.date(byAdding: .year, value: -30, to: today) ?? today
+        return earliest...today
+    }
 
     private var addChapterDateRangeInvalid: Bool {
         addChapterEnd <= addChapterStart
@@ -38,604 +62,601 @@ struct OnboardingContainerView: View {
         !addChapterDateRangeInvalid && !addChapterOverlapsExisting
     }
 
-    var body: some View {
-        ZStack {
-            StackTheme.background.ignoresSafeArea()
-
-            VStack(spacing: 0) {
-                Spacer().frame(minHeight: 60)
-
-                Group {
-                    switch currentPage {
-                    case 0: screen1
-                    case 1: screen2
-                    case 2: screen3
-                    case 3: screen4
-                    case 4:
-                        if selectedPath == .new {
-                            screen5A
-                        } else {
-                            screen5B
-                        }
-                    default: EmptyView()
-                    }
-                }
-                .id(currentPage)
-                .transition(.opacity)
-
-                Spacer()
-                Spacer()
-
-                if currentPage < 3 {
-                    pageIndicator
-                        .padding(.bottom, 48)
-                }
-            }
-            .task(id: currentPage) {
-                guard !reduceMotion else {
-                    visibleElements = 3
-                    return
-                }
-                withAnimation(.easeOut(duration: 0.3)) { visibleElements = 1 }
-                try? await Task.sleep(nanoseconds: 80_000_000)
-                withAnimation(.easeOut(duration: 0.3)) { visibleElements = 2 }
-                try? await Task.sleep(nanoseconds: 80_000_000)
-                withAnimation(.easeOut(duration: 0.3)) { visibleElements = 3 }
-            }
-            .onChange(of: currentPage) { _, _ in
-                if !reduceMotion { visibleElements = 0 }
-            }
-        }
-        .overlay(alignment: .topLeading) {
-            if currentPage >= 3 {
-                Button {
-                    withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage -= 1 }
-                } label: {
-                    Image(systemName: "chevron.left")
-                        .font(.system(size: 17, weight: .regular))
-                        .foregroundStyle(StackTheme.secondaryText)
-                        .padding(16)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityLabel("Back")
-                .padding(.top, 8)
-            }
-        }
-        .overlay(alignment: .topTrailing) {
-            if currentPage < 3 {
-                Button {
-                    withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage = 3 }
-                } label: {
-                    Text("Skip")
-                        .font(StackTypography.body)
-                        .foregroundStyle(StackTheme.secondaryText)
-                        .padding(16)
-                        .contentShape(Rectangle())
-                }
-                .padding(.top, 8)
-            }
-        }
-        .gesture(
-            currentPage < 3 ?
-            DragGesture(minimumDistance: 30)
-                .onEnded { value in
-                    if value.translation.width < -30 {
-                        withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage += 1 }
-                    } else if value.translation.width > 30 && currentPage > 0 {
-                        withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage -= 1 }
-                    }
-                }
-            : nil
-        )
-    }
-
-    // MARK: - Screen 1
-
-    private var screen1: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("Every day counts.")
-                .font(.system(size: 42, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .entranceAnimation(visible: visibleElements >= 1)
-
-            Text("Whether this is Day 1 or Day 847, nothing disappears.")
-                .font(.system(size: 19, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .padding(.top, 24)
-                .entranceAnimation(visible: visibleElements >= 2)
-
-            Text("Nothing resets. It all stacks.")
-                .font(.system(size: 19, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .padding(.top, 16)
-                .entranceAnimation(visible: visibleElements >= 2)
-
-            ZStack {
-                Circle()
-                    .stroke(StackTheme.primaryText, lineWidth: 1.5)
-                    .frame(width: 80, height: 80)
-                Text("14")
-                    .font(.system(size: 36, weight: .light))
-                    .foregroundStyle(StackTheme.primaryText)
-            }
-            .padding(.top, 48)
-            .entranceAnimation(visible: visibleElements >= 3)
-
-            Spacer()
-
-            Button {
-                store.hasCompletedOnboarding = true
-                store.save()
-            } label: {
-                Text("I already have an account")
-                    .font(StackTypography.callout)
-                    .foregroundStyle(StackTheme.secondaryText)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 14)
-                    .background(StackTheme.cardBackground)
-                    .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
-                    .overlay(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall).stroke(StackTheme.cardBorder, lineWidth: 1.0))
-            }
-            .buttonStyle(PressScaleButtonStyle())
-            .padding(.bottom, 24)
-            .entranceAnimation(visible: visibleElements >= 3)
-        }
-        .padding(.horizontal, 28)
-    }
-
-    // MARK: - Screen 2
-
-    private var screen2: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("No resets. Ever.")
-                .font(.system(size: 42, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .entranceAnimation(visible: visibleElements >= 1)
-
-            Text("Other counters start you back at zero.")
-                .font(.system(size: 19, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .padding(.top, 24)
-                .entranceAnimation(visible: visibleElements >= 2)
-
-            Text("STACK keeps everything. Every chapter stays.")
-                .font(.system(size: 19, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .padding(.top, 16)
-                .entranceAnimation(visible: visibleElements >= 2)
-
-            StackCard(padding: 16, radius: StackTheme.cardRadiusSmall) {
-                VStack(alignment: .leading, spacing: 6) {
-                    Text("Chapter 1  ·  127 days  ·  Mar–Jul 2023")
-                        .font(StackTypography.footnote)
-                        .foregroundStyle(StackTheme.tertiaryText)
-                    Text("Chapter 2  ·  currently at Day 847")
-                        .font(StackTypography.footnote)
-                        .foregroundStyle(StackTheme.secondaryText)
-                    StackTheme.separator.frame(height: 0.5).padding(.vertical, 2)
-                    Text("974 days stacked")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundStyle(StackTheme.secondaryText)
-                }
-            }
-            .padding(.top, 32)
-            .entranceAnimation(visible: visibleElements >= 3)
-        }
-        .padding(.horizontal, 28)
-    }
-
-    // MARK: - Screen 3
-
-    private var screen3: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("Messages at milestones.")
-                .font(.system(size: 42, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .entranceAnimation(visible: visibleElements >= 1)
-
-            Text("At certain days, a short anonymous message appears.")
-                .font(.system(size: 19, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .padding(.top, 24)
-                .entranceAnimation(visible: visibleElements >= 2)
-
-            Text("Written by someone who reached that number before you.")
-                .font(.system(size: 19, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .padding(.top, 16)
-                .entranceAnimation(visible: visibleElements >= 2)
-
-            Text("When you're ready, you leave one for the next person.")
-                .font(.system(size: 19, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .padding(.top, 16)
-                .entranceAnimation(visible: visibleElements >= 2)
-
-            StackCard(padding: 20, radius: StackTheme.cardRadiusSmall) {
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("The first month is a wall. The second is a door.")
-                        .font(Font.custom("Georgia", size: 17))
-                        .foregroundStyle(StackTheme.primaryText)
-                        .lineSpacing(5)
-                    Text("— from day 47")
-                        .font(StackTypography.caption)
-                        .foregroundStyle(StackTheme.tertiaryText)
-                }
-            }
-            .padding(.top, 24)
-            .entranceAnimation(visible: visibleElements >= 3)
-
-            Text("Your first week of messages is free. After that, one payment unlocks the relay forever.")
-                .font(StackTypography.callout)
-                .foregroundStyle(StackTheme.tertiaryText)
-                .padding(.top, 16)
-                .entranceAnimation(visible: visibleElements >= 3)
-        }
-        .padding(.horizontal, 28)
-    }
-
-    // MARK: - Screen 4
-
-    private var screen4: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            Text("Where are you?")
-                .font(.system(size: 42, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
-                .entranceAnimation(visible: visibleElements >= 1)
-
-            Spacer().frame(height: 48)
-
-            Button {
-                selectedPath = .new
-                withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage = 4 }
-            } label: {
-                Text("Starting today")
-                    .font(StackTypography.cta)
-                    .foregroundStyle(StackTheme.background)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(StackTheme.primaryText)
-                    .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
-            }
-            .buttonStyle(PressScaleButtonStyle())
-            .entranceAnimation(visible: visibleElements >= 2)
-
-            Button {
-                selectedPath = .existing
-                withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { currentPage = 4 }
-            } label: {
-                Text("I'm already counting")
-                    .font(StackTypography.callout)
-                    .foregroundStyle(StackTheme.secondaryText)
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 16)
-                    .background(StackTheme.cardBackground)
-                    .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
-                    .overlay(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall).stroke(StackTheme.cardBorder, lineWidth: 1.0))
-            }
-            .buttonStyle(PressScaleButtonStyle())
-            .padding(.top, 16)
-            .entranceAnimation(visible: visibleElements >= 3)
-        }
-        .padding(.horizontal, 28)
-    }
-
-    // MARK: - Screen 5A (new chapter)
-
-    private var screen5A: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            if showConfirmation, let date = confirmedDate {
-                let dayCount = max(1, (Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: date), to: Calendar.current.startOfDay(for: Date())).day ?? 0) + 1)
-
-                Text("Starting from \(Self.formatDate(date)).")
-                    .font(.system(size: 34, weight: .regular))
-                    .foregroundStyle(StackTheme.primaryText)
-
-                Text("Day \(dayCount).")
-                    .font(.system(size: 34, weight: .regular))
-                    .foregroundStyle(StackTheme.primaryText)
-                    .padding(.top, 8)
-
-                Spacer()
-
-                Button {
-                    let isToday = Calendar.current.isDateInToday(date)
-                    let startDate = isToday
-                        ? Calendar.current.date(byAdding: .day, value: -1, to: Calendar.current.startOfDay(for: date))!
-                        : date
-                    store.createInitialChapter(startDate: startDate)
-                } label: {
-                    Text("Let's go")
-                        .font(StackTypography.cta)
-                        .foregroundStyle(StackTheme.background)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(StackTheme.primaryText)
-                        .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
-                }
-                .buttonStyle(PressScaleButtonStyle())
-
-                Button {
-                    withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { showConfirmation = false }
-                } label: {
-                    Text("Change date")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(StackTheme.tertiaryText)
-                        .padding(.vertical, 12)
-                }
-                .frame(maxWidth: .infinity)
-                .padding(.top, 8)
-            } else {
-                Text("When did your current chapter begin?")
-                    .font(.system(size: 34, weight: .regular))
-                    .foregroundStyle(StackTheme.primaryText)
-                    .entranceAnimation(visible: visibleElements >= 1)
-
-                Text("Or tap below if today is Day 1.")
-                    .font(.system(size: 17, weight: .regular))
-                    .foregroundStyle(StackTheme.primaryText)
-                    .padding(.top, 8)
-                    .entranceAnimation(visible: visibleElements >= 1)
-
-                DatePicker("", selection: $selectedDate, in: ...Date(), displayedComponents: .date)
-                    .datePickerStyle(.wheel)
-                    .labelsHidden()
-                    .colorScheme(.dark)
-                    .tint(StackTheme.primaryText)
-                    .frame(maxHeight: 200)
-                    .padding(.top, 16)
-                    .entranceAnimation(visible: visibleElements >= 2)
-
-                Button {
-                    confirmedDate = selectedDate
-                    withAnimation(reduceMotion ? .none : .easeInOut(duration: 0.2)) { showConfirmation = true }
-                } label: {
-                    let isToday = Calendar.current.isDateInToday(selectedDate)
-                    Text(isToday ? "This is Day 1" : "Start from \(Self.formatDate(selectedDate))")
-                        .font(StackTypography.cta)
-                        .foregroundStyle(StackTheme.background)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(StackTheme.primaryText)
-                        .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
-                }
-                .buttonStyle(PressScaleButtonStyle())
-                .padding(.top, 24)
-                .entranceAnimation(visible: visibleElements >= 3)
-
-                Text("Sign in after setup to back up your progress.")
-                    .font(StackTypography.caption)
-                    .foregroundStyle(StackTheme.tertiaryText)
-                    .multilineTextAlignment(.leading)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(.top, 16)
-                    .entranceAnimation(visible: visibleElements >= 3)
-            }
-        }
-        .padding(.horizontal, 28)
-    }
-
-    // MARK: - Screen 5B (existing counter)
-
     private var currentStartOverlapMessage: String? {
         guard !previousChapters.isEmpty else { return nil }
+
         let currentStart = Calendar.current.startOfDay(for: historyCurrentStart)
         for entry in previousChapters {
             if currentStart < Calendar.current.startOfDay(for: entry.endDate) {
                 let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
-                return "Overlaps with Chapter \(entry.number) (\(StackDateFormatter.string(from: entry.startDate)) – \(StackDateFormatter.string(from: entry.endDate)), \(days) days)"
+                return "Overlaps with Chapter \(entry.number) (\(Self.formatDate(entry.startDate)) to \(Self.formatDate(entry.endDate)), \(days) days)"
             }
         }
         return nil
     }
 
-    private var screen5B: some View {
-        ScrollView {
-            VStack(alignment: .leading, spacing: 0) {
-                Text("Let's bring it all.")
-                    .font(.system(size: 34, weight: .regular))
-                    .foregroundStyle(StackTheme.primaryText)
-                    .entranceAnimation(visible: visibleElements >= 1)
+    private var newPathDayCount: Int {
+        let today = Calendar.current.startOfDay(for: Date())
+        let selected = Calendar.current.startOfDay(for: selectedDate)
+        return max(1, (Calendar.current.dateComponents([.day], from: selected, to: today).day ?? 0) + 1)
+    }
 
-                Text("CURRENT CHAPTER")
-                    .font(StackTypography.overline)
-                    .tracking(1.5)
-                    .foregroundStyle(StackTheme.tertiaryText)
-                    .padding(.top, 24)
-                    .entranceAnimation(visible: visibleElements >= 2)
+    private var newPathSummary: String {
+        if Calendar.current.isDateInToday(selectedDate) {
+            return "Today becomes Day 1. Your first chapter starts now."
+        }
+        return "Starting on \(Self.formatDate(selectedDate)) makes today Day \(newPathDayCount)."
+    }
 
-                DatePicker("Started on", selection: $historyCurrentStart, in: ...Date(), displayedComponents: .date)
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(StackTheme.secondaryText)
-                    .colorScheme(.dark)
-                    .tint(StackTheme.primaryText)
-                    .padding(.top, 8)
-                    .entranceAnimation(visible: visibleElements >= 2)
-                    .onChange(of: historyCurrentStart) { _, newValue in
-                        if newValue > Date() {
-                            historyCurrentStart = Date()
-                        }
-                    }
+    var body: some View {
+        ZStack {
+            StackTheme.background.ignoresSafeArea()
 
-                if let overlap = currentStartOverlapMessage {
-                    Text(overlap)
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(StackTheme.tertiaryText)
-                        .padding(.top, 4)
-                }
+            VStack(spacing: 0) {
+                pageContent
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .id(currentPage)
+                    .transition(.opacity)
 
-                Toggle(isOn: $showHistory) {
-                    Text("I have previous chapters")
-                        .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(StackTheme.secondaryText)
-                }
-                .tint(StackTheme.primaryText)
-                .padding(.top, 24)
-                .entranceAnimation(visible: visibleElements >= 2)
-
-                if showHistory {
-                    Text("PREVIOUS CHAPTERS")
-                        .font(StackTypography.overline)
-                        .tracking(1.5)
-                        .foregroundStyle(StackTheme.tertiaryText)
-                        .padding(.top, 24)
-
-                    List {
-                        ForEach(previousChapters) { entry in
-                            let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
-                            Text("Chapter \(entry.number) · \(days) days · \(StackDateFormatter.string(from: entry.startDate)) – \(StackDateFormatter.string(from: entry.endDate))")
-                                .font(.system(size: 14, weight: .regular))
-                                .foregroundStyle(StackTheme.tertiaryText)
-                                .listRowBackground(Color.clear)
-                                .listRowInsets(EdgeInsets(top: 4, leading: 0, bottom: 4, trailing: 0))
-                        }
-                        .onDelete { offsets in
-                            previousChapters.remove(atOffsets: offsets)
-                            renumberChapters()
-                        }
-                    }
-                    .listStyle(.plain)
-                    .scrollContentBackground(.hidden)
-                    .frame(minHeight: CGFloat(previousChapters.count) * 36)
-                    .environment(\.editMode, .constant(.active))
-
-                    Button {
-                        showAddChapter = true
-                    } label: {
-                        Text("+ Add chapter")
-                            .font(.system(size: 14, weight: .regular))
-                            .foregroundStyle(StackTheme.secondaryText)
-                    }
-                    .padding(.top, 12)
-                }
-
-                StackCard(padding: 16, radius: StackTheme.cardRadiusSmall) {
-                    historyPreview
-                }
-                .padding(.top, 32)
-                .entranceAnimation(visible: visibleElements >= 2)
-
-                Button {
-                    showHistorySummary = true
-                } label: {
-                    Text("Start stacking")
-                        .font(StackTypography.cta)
-                        .foregroundStyle(StackTheme.background)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
-                        .background(currentStartOverlapMessage == nil ? StackTheme.primaryText : StackTheme.ghost)
-                        .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
-                }
-                .buttonStyle(PressScaleButtonStyle())
-                .disabled(currentStartOverlapMessage != nil)
-                .padding(.top, 24)
-                .padding(.bottom, 48)
-                .entranceAnimation(visible: visibleElements >= 3)
+                pageIndicator
+                    .padding(.bottom, 32)
             }
-            .padding(.horizontal, 28)
+        }
+        .overlay(alignment: .topLeading) {
+            if currentPage > 0 {
+                Button {
+                    goToPreviousPage()
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(StackTypography.body)
+                        .foregroundStyle(StackTheme.secondaryText)
+                        .frame(width: 44, height: 44)
+                }
+                .accessibilityLabel("Back")
+                .padding(.top, 8)
+                .padding(.leading, 8)
+            }
+        }
+        .overlay(alignment: .topTrailing) {
+            if currentPage < pageCount - 1 {
+                Button {
+                    goToPage(pageCount - 1)
+                } label: {
+                    Text("Skip")
+                        .font(StackTypography.callout)
+                        .foregroundStyle(StackTheme.secondaryText)
+                        .padding(.horizontal, 16)
+                        .frame(height: 44)
+                }
+                .padding(.top, 8)
+                .padding(.trailing, 8)
+            }
         }
         .sheet(isPresented: $showAddChapter) {
             addChapterSheet
         }
         .alert("Ready?", isPresented: $showHistorySummary) {
-            Button("Let's go") {
+            Button("Start stacking") {
                 commitHistory()
             }
             Button("Cancel", role: .cancel) {}
         } message: {
-            let currentDays = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: historyCurrentStart), to: Calendar.current.startOfDay(for: Date())).day ?? 0
+            let currentDays = Calendar.current.dateComponents(
+                [.day],
+                from: Calendar.current.startOfDay(for: historyCurrentStart),
+                to: Calendar.current.startOfDay(for: Date())
+            ).day ?? 0
             let totalPrevious = previousChapters.reduce(0) {
                 $0 + (Calendar.current.dateComponents([.day], from: $1.startDate, to: $1.endDate).day ?? 0)
             }
             let chapterCount = previousChapters.count + 1
             Text("\(chapterCount) chapters, \(currentDays + totalPrevious) total days.")
         }
+        .task(id: currentPage) {
+            await animateCurrentPage()
+        }
+        .onChange(of: currentPage) { _, _ in
+            if !reduceMotion {
+                visibleElements = 0
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var pageContent: some View {
+        switch currentPage {
+        case 0:
+            marketingPage(
+                title: "Every day counts.",
+                body: "Whether this is Day 1 or Day 847, nothing disappears.",
+                detail: "No resets. No lost history. It all stacks.",
+                primaryTitle: "Continue",
+                secondaryTitle: "I already have an account",
+                visual: counterPreview,
+                primaryAction: goToNextPage,
+                secondaryAction: completeOnboarding
+            )
+        case 1:
+            marketingPage(
+                title: "No resets. Ever.",
+                body: "Every chapter stays visible, even when life changes shape.",
+                detail: "You keep the full timeline instead of pretending the earlier days never happened.",
+                primaryTitle: "Continue",
+                secondaryTitle: nil,
+                visual: chapterPreview,
+                primaryAction: goToNextPage,
+                secondaryAction: nil
+            )
+        case 2:
+            marketingPage(
+                title: "Messages at milestones.",
+                body: "At key days, a short anonymous note appears from someone who reached that number first.",
+                detail: "When your time comes, you leave one forward.",
+                primaryTitle: "Set up my chapter",
+                secondaryTitle: nil,
+                visual: relayPreview,
+                primaryAction: goToNextPage,
+                secondaryAction: nil
+            )
+        default:
+            setupPage
+        }
+    }
+
+    private func marketingPage<Visual: View>(
+        title: String,
+        body: String,
+        detail: String,
+        primaryTitle: String,
+        secondaryTitle: String?,
+        visual: Visual,
+        primaryAction: @escaping () -> Void,
+        secondaryAction: (() -> Void)?
+    ) -> some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Spacer(minLength: 76)
+
+            Text(title)
+                .font(StackTypography.display)
+                .foregroundStyle(StackTheme.primaryText)
+                .entranceAnimation(visible: visibleElements >= 1, offset: 18)
+
+            Text(body)
+                .font(StackTypography.callout)
+                .foregroundStyle(StackTheme.primaryText)
+                .padding(.top, 20)
+                .entranceAnimation(visible: visibleElements >= 2, offset: 18)
+
+            Text(detail)
+                .font(StackTypography.callout)
+                .foregroundStyle(StackTheme.secondaryText)
+                .padding(.top, 10)
+                .entranceAnimation(visible: visibleElements >= 2, offset: 18)
+
+            visual
+                .padding(.top, 40)
+                .frame(maxWidth: .infinity)
+                .entranceAnimation(visible: visibleElements >= 3, offset: 22)
+
+            Spacer(minLength: 32)
+
+            VStack(spacing: 12) {
+                Button(action: primaryAction) {
+                    Text(primaryTitle)
+                }
+                .buttonStyle(PrimaryCTAButtonStyle())
+
+                if let secondaryTitle, let secondaryAction {
+                    Button(action: secondaryAction) {
+                        Text(secondaryTitle)
+                    }
+                    .buttonStyle(SurfaceButtonStyle())
+                }
+            }
+            .entranceAnimation(visible: visibleElements >= 4, offset: 18)
+        }
+        .padding(.horizontal, StackSpacing.horizontalPadding)
+    }
+
+    private var counterPreview: some View {
+        VStack(spacing: 18) {
+            ZStack {
+                Circle()
+                    .stroke(StackTheme.ghost, lineWidth: 2)
+                    .frame(width: 120, height: 120)
+
+                Circle()
+                    .trim(from: 0, to: 0.78)
+                    .stroke(
+                        StackTheme.ember,
+                        style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                    )
+                    .rotationEffect(.degrees(-90))
+                    .frame(width: 120, height: 120)
+
+                VStack(spacing: 2) {
+                    Text("14")
+                        .font(StackTypography.heroCounter)
+                        .minimumScaleFactor(0.45)
+                        .lineLimit(1)
+                        .frame(width: 84)
+                        .foregroundStyle(StackTheme.primaryText)
+                    Text("DAYS")
+                        .font(StackTypography.overline)
+                        .tracking(1.5)
+                        .foregroundStyle(StackTheme.secondaryText)
+                }
+            }
+
+            Text("One tap fills the ring for today.")
+                .font(StackTypography.caption)
+                .foregroundStyle(StackTheme.secondaryText)
+        }
+    }
+
+    private var chapterPreview: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            previewChapterRow(
+                title: "Chapter 2",
+                detail: "Current chapter · Day 847",
+                highlight: true
+            )
+
+            StackTheme.separator
+                .frame(height: 1)
+                .padding(.vertical, 14)
+
+            previewChapterRow(
+                title: "Chapter 1",
+                detail: "127 days · Mar 2023 to Jul 2023",
+                highlight: false
+            )
+
+            StackTheme.separator
+                .frame(height: 1)
+                .padding(.vertical, 14)
+
+            Text("974 days stacked")
+                .font(StackTypography.callout)
+                .foregroundStyle(StackTheme.primaryText)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func previewChapterRow(title: String, detail: String, highlight: Bool) -> some View {
+        HStack(alignment: .top, spacing: 14) {
+            Circle()
+                .fill(highlight ? StackTheme.ember : StackTheme.ghost)
+                .frame(width: highlight ? 10 : 8, height: highlight ? 10 : 8)
+                .padding(.top, 6)
+
+            VStack(alignment: .leading, spacing: 4) {
+                Text(title)
+                    .font(StackTypography.callout)
+                    .foregroundStyle(highlight ? StackTheme.primaryText : StackTheme.secondaryText)
+
+                Text(detail)
+                    .font(StackTypography.caption)
+                    .foregroundStyle(StackTheme.secondaryText)
+            }
+        }
+    }
+
+    private var relayPreview: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            RelayCard {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text("The first month is a wall. The second is a door.")
+                        .font(StackTypography.relay)
+                        .foregroundStyle(StackTheme.primaryText)
+                        .lineSpacing(5)
+
+                    Text("From day 47")
+                        .font(StackTypography.caption)
+                        .foregroundStyle(StackTheme.secondaryText)
+                }
+            }
+
+            Text("The relay is the only card in the flow.")
+                .font(StackTypography.caption)
+                .foregroundStyle(StackTheme.secondaryText)
+        }
+    }
+
+    private var setupPage: some View {
+        ScrollView(showsIndicators: false) {
+            VStack(alignment: .leading, spacing: 0) {
+                Spacer(minLength: 76)
+
+                Text("Where are you?")
+                    .font(StackTypography.display)
+                    .foregroundStyle(StackTheme.primaryText)
+                    .entranceAnimation(visible: visibleElements >= 1, offset: 18)
+
+                Text("Pick the start of this chapter. If you have older chapters, add them below so none of that time disappears.")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.primaryText)
+                    .padding(.top, 20)
+                    .entranceAnimation(visible: visibleElements >= 2, offset: 18)
+
+                HStack(spacing: 12) {
+                    ForEach(OnboardingPath.allCases, id: \.title) { path in
+                        Button {
+                            selectedPath = path
+                            if path == .new {
+                                showHistory = false
+                            }
+                        } label: {
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text(path.title)
+                                Text(path.detail)
+                                    .font(StackTypography.caption)
+                                    .foregroundStyle(selectedPath == path ? StackTheme.background.opacity(0.7) : StackTheme.secondaryText)
+                            }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                        }
+                        .buttonStyle(selectedPath == path ? AnyButtonStyle(PrimaryCTAButtonStyle()) : AnyButtonStyle(SurfaceButtonStyle()))
+                    }
+                }
+                .padding(.top, 28)
+                .entranceAnimation(visible: visibleElements >= 3, offset: 18)
+
+                Group {
+                    if selectedPath == .new {
+                        newChapterSetup
+                    } else {
+                        existingChapterSetup
+                    }
+                }
+                .padding(.top, 28)
+                .entranceAnimation(visible: visibleElements >= 4, offset: 22)
+            }
+            .padding(.horizontal, StackSpacing.horizontalPadding)
+            .padding(.bottom, 40)
+        }
+    }
+
+    private var newChapterSetup: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("Current chapter")
+
+            StackDatePicker(selection: $selectedDate, range: selectableDateRange)
+                .padding(.top, 14)
+
+            Text(newPathSummary)
+                .font(StackTypography.callout)
+                .foregroundStyle(StackTheme.secondaryText)
+                .padding(.top, 18)
+
+            Button {
+                let startOfDay = Calendar.current.startOfDay(for: selectedDate)
+                let startDate = Calendar.current.isDateInToday(selectedDate)
+                    ? Calendar.current.date(byAdding: .day, value: -1, to: startOfDay) ?? startOfDay
+                    : startOfDay
+                store.createInitialChapter(startDate: startDate)
+            } label: {
+                Text(Calendar.current.isDateInToday(selectedDate) ? "Start at Day 1" : "Start from \(Self.formatDate(selectedDate))")
+            }
+            .buttonStyle(PrimaryCTAButtonStyle())
+            .padding(.top, 24)
+
+            Text("You will sign in after setup so the timeline can sync and survive reinstalls.")
+                .font(StackTypography.caption)
+                .foregroundStyle(StackTheme.secondaryText)
+                .padding(.top, 14)
+        }
+    }
+
+    private var existingChapterSetup: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("Current chapter")
+
+            StackDatePicker(selection: $historyCurrentStart, range: selectableDateRange)
+                .padding(.top, 14)
+                .onChange(of: historyCurrentStart) { _, newValue in
+                    if newValue > Date() {
+                        historyCurrentStart = Date()
+                    }
+                }
+
+            if let overlap = currentStartOverlapMessage {
+                Text(overlap)
+                    .font(StackTypography.caption)
+                    .foregroundStyle(StackTheme.secondaryText)
+                    .padding(.top, 12)
+            }
+
+            Toggle(isOn: $showHistory) {
+                Text("I have previous chapters")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.primaryText)
+            }
+            .tint(StackTheme.ember)
+            .padding(.top, 24)
+
+            if showHistory {
+                sectionHeader("Previous chapters")
+                    .padding(.top, 28)
+
+                if previousChapters.isEmpty {
+                    Text("Add every closed chapter in order. The current chapter stays open.")
+                        .font(StackTypography.caption)
+                        .foregroundStyle(StackTheme.secondaryText)
+                        .padding(.top, 10)
+                } else {
+                    previousChapterList
+                        .padding(.top, 14)
+                }
+
+                Button {
+                    let defaultStart = Calendar.current.date(byAdding: .day, value: -7, to: historyCurrentStart) ?? historyCurrentStart
+                    addChapterStart = min(defaultStart, historyCurrentStart)
+                    addChapterEnd = historyCurrentStart
+                    showAddChapter = true
+                } label: {
+                    Text("Add chapter")
+                }
+                .buttonStyle(SurfaceButtonStyle())
+                .padding(.top, 16)
+            }
+
+            historyPreview
+                .padding(.top, 28)
+
+            Button {
+                showHistorySummary = true
+            } label: {
+                Text("Start stacking")
+            }
+            .buttonStyle(PrimaryCTAButtonStyle())
+            .disabled(currentStartOverlapMessage != nil)
+            .opacity(currentStartOverlapMessage == nil ? 1 : 0.45)
+            .padding(.top, 24)
+        }
+    }
+
+    private var previousChapterList: some View {
+        VStack(spacing: 0) {
+            ForEach(previousChapters) { entry in
+                let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
+
+                HStack(alignment: .top, spacing: 12) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Chapter \(entry.number)")
+                            .font(StackTypography.callout)
+                            .foregroundStyle(StackTheme.primaryText)
+
+                        Text("\(days) days · \(Self.formatDate(entry.startDate)) to \(Self.formatDate(entry.endDate))")
+                            .font(StackTypography.caption)
+                            .foregroundStyle(StackTheme.secondaryText)
+                    }
+
+                    Spacer()
+
+                    Button {
+                        previousChapters.removeAll { $0.id == entry.id }
+                        renumberChapters()
+                    } label: {
+                        Image(systemName: "minus.circle.fill")
+                            .font(StackTypography.callout)
+                            .foregroundStyle(StackTheme.secondaryText)
+                            .frame(width: 44, height: 44)
+                    }
+                    .accessibilityLabel("Remove Chapter \(entry.number)")
+                }
+                .padding(.vertical, 12)
+
+                if entry.id != previousChapters.last?.id {
+                    StackTheme.separator.frame(height: 1)
+                }
+            }
+        }
     }
 
     private var historyPreview: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            let currentDays = Calendar.current.dateComponents([.day], from: Calendar.current.startOfDay(for: historyCurrentStart), to: Calendar.current.startOfDay(for: Date())).day ?? 0
-            let chapterNum = previousChapters.count + 1
+        VStack(alignment: .leading, spacing: 0) {
+            sectionHeader("Preview")
 
-            Text("Chapter \(chapterNum)  ·  currently Day \(currentDays)")
-                .font(.system(size: 15, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
+            VStack(alignment: .leading, spacing: 10) {
+                let currentDays = Calendar.current.dateComponents(
+                    [.day],
+                    from: Calendar.current.startOfDay(for: historyCurrentStart),
+                    to: Calendar.current.startOfDay(for: Date())
+                ).day ?? 0
+                let chapterNum = previousChapters.count + 1
 
-            ForEach(previousChapters.reversed()) { entry in
-                let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
-                Text("Chapter \(entry.number)  ·  \(days) days")
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(StackTheme.tertiaryText)
+                Text("Chapter \(chapterNum) · currently Day \(currentDays)")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.primaryText)
+
+                ForEach(previousChapters.reversed()) { entry in
+                    let days = Calendar.current.dateComponents([.day], from: entry.startDate, to: entry.endDate).day ?? 0
+                    Text("Chapter \(entry.number) · \(days) days")
+                        .font(StackTypography.caption)
+                        .foregroundStyle(StackTheme.secondaryText)
+                }
+
+                StackTheme.separator
+                    .frame(height: 1)
+                    .padding(.vertical, 6)
+
+                let totalPrevious = previousChapters.reduce(0) {
+                    $0 + (Calendar.current.dateComponents([.day], from: $1.startDate, to: $1.endDate).day ?? 0)
+                }
+                Text("\(currentDays + totalPrevious) days stacked")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.primaryText)
             }
-
-            StackTheme.separator.frame(height: 0.5).padding(.vertical, 4)
-
-            let totalPrevious = previousChapters.reduce(0) {
-                $0 + (Calendar.current.dateComponents([.day], from: $1.startDate, to: $1.endDate).day ?? 0)
-            }
-            Text("\(currentDays + totalPrevious) days stacked")
-                .font(.system(size: 14, weight: .regular))
-                .foregroundStyle(StackTheme.secondaryText)
+            .padding(.top, 14)
         }
     }
 
     private var addChapterSheet: some View {
         NavigationStack {
-            VStack(spacing: 24) {
-                DatePicker("Start date", selection: $addChapterStart, in: ...Date(), displayedComponents: .date)
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(StackTheme.secondaryText)
-                    .colorScheme(.dark)
-                    .tint(StackTheme.primaryText)
-                DatePicker("End date", selection: $addChapterEnd, in: ...Date(), displayedComponents: .date)
-                    .font(.system(size: 15, weight: .regular))
-                    .foregroundStyle(StackTheme.secondaryText)
-                    .colorScheme(.dark)
-                    .tint(StackTheme.primaryText)
+            ZStack {
+                StackTheme.background.ignoresSafeArea()
 
-                if addChapterDateRangeInvalid {
-                    Text("End date must be after start date.")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(StackTheme.tertiaryText)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                } else if addChapterOverlapsExisting {
-                    if let overlapping = previousChapters.first(where: { entry in
-                        addChapterStart < entry.endDate && addChapterEnd > entry.startDate
-                    }) {
-                        Text("Overlaps with Chapter \(overlapping.number) (\(StackDateFormatter.string(from: overlapping.startDate)) – \(StackDateFormatter.string(from: overlapping.endDate)))")
-                            .font(.system(size: 13, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
-                            .frame(maxWidth: .infinity, alignment: .leading)
+                ScrollView(showsIndicators: false) {
+                    VStack(alignment: .leading, spacing: 0) {
+                        Text("Previous chapter")
+                            .font(StackTypography.title)
+                            .foregroundStyle(StackTheme.primaryText)
+
+                        sectionHeader("Start date")
+                            .padding(.top, 28)
+
+                        StackDatePicker(selection: $addChapterStart, range: selectableDateRange)
+                            .padding(.top, 14)
+
+                        sectionHeader("End date")
+                            .padding(.top, 28)
+
+                        StackDatePicker(selection: $addChapterEnd, range: selectableDateRange)
+                            .padding(.top, 14)
+
+                        if addChapterDateRangeInvalid {
+                            Text("End date must be after the start date.")
+                                .font(StackTypography.caption)
+                                .foregroundStyle(StackTheme.secondaryText)
+                                .padding(.top, 14)
+                        } else if addChapterOverlapsExisting,
+                                  let overlapping = previousChapters.first(where: { entry in
+                                      addChapterStart < entry.endDate && addChapterEnd > entry.startDate
+                                  }) {
+                            Text("Overlaps with Chapter \(overlapping.number) (\(Self.formatDate(overlapping.startDate)) to \(Self.formatDate(overlapping.endDate))).")
+                                .font(StackTypography.caption)
+                                .foregroundStyle(StackTheme.secondaryText)
+                                .padding(.top, 14)
+                        }
                     }
+                    .padding(.horizontal, StackSpacing.horizontalPadding)
+                    .padding(.top, 24)
+                    .padding(.bottom, 40)
                 }
-
-                Spacer()
             }
-            .padding(.horizontal, 28)
-            .padding(.top, 24)
-            .background(StackTheme.background)
-            .navigationTitle("Add Chapter")
             .navigationBarTitleDisplayMode(.inline)
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
             .toolbarColorScheme(.dark, for: .navigationBar)
             .toolbar {
                 ToolbarItem(placement: .cancellationAction) {
-                    Button("Cancel") { showAddChapter = false }
-                        .font(.system(size: 16, weight: .regular))
-                        .foregroundStyle(StackTheme.secondaryText)
+                    Button("Cancel") {
+                        showAddChapter = false
+                    }
+                    .foregroundStyle(StackTheme.secondaryText)
                 }
+
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
                         let entry = PreviousChapterEntry(
                             number: previousChapters.count + 1,
-                            startDate: addChapterStart,
-                            endDate: addChapterEnd
+                            startDate: Calendar.current.startOfDay(for: addChapterStart),
+                            endDate: Calendar.current.startOfDay(for: addChapterEnd)
                         )
                         previousChapters.append(entry)
+                        renumberChapters()
                         showAddChapter = false
                     }
-                    .font(.system(size: 16, weight: .regular))
-                    .foregroundStyle(addChapterIsValid ? StackTheme.primaryText : StackTheme.tertiaryText)
+                    .foregroundStyle(addChapterIsValid ? StackTheme.primaryText : StackTheme.secondaryText)
                     .disabled(!addChapterIsValid)
                 }
             }
@@ -644,20 +665,56 @@ struct OnboardingContainerView: View {
 
     private var pageIndicator: some View {
         HStack(spacing: 8) {
-            ForEach(0..<4, id: \.self) { index in
+            ForEach(0..<pageCount, id: \.self) { index in
                 let isActive = index == currentPage
-                Circle()
-                    .fill(isActive ? StackTheme.primaryText : StackTheme.ghost)
-                    .frame(
-                        width: isActive ? 6 : 5,
-                        height: isActive ? 6 : 5
-                    )
-                    .animation(
-                        reduceMotion ? .none : .spring(duration: 0.25, bounce: 0.3),
-                        value: currentPage
-                    )
+                Capsule()
+                    .fill(isActive ? StackTheme.ember : StackTheme.ghost)
+                    .frame(width: isActive ? 22 : 6, height: 6)
+                    .animation(reduceMotion ? .none : StackAnimation.entrance, value: currentPage)
             }
         }
+    }
+
+    private func sectionHeader(_ text: String) -> some View {
+        Text(text.uppercased())
+            .font(StackTypography.overline)
+            .tracking(1.5)
+            .foregroundStyle(StackTheme.secondaryText)
+    }
+
+    private func animateCurrentPage() async {
+        guard !reduceMotion else {
+            visibleElements = 4
+            return
+        }
+
+        visibleElements = 0
+        for step in 1...4 {
+            withAnimation(StackAnimation.entrance) {
+                visibleElements = step
+            }
+            try? await Task.sleep(nanoseconds: 80_000_000)
+        }
+    }
+
+    private func goToPage(_ page: Int) {
+        let target = max(0, min(page, pageCount - 1))
+        withAnimation(reduceMotion ? .none : StackAnimation.entrance) {
+            currentPage = target
+        }
+    }
+
+    private func goToNextPage() {
+        goToPage(currentPage + 1)
+    }
+
+    private func goToPreviousPage() {
+        goToPage(currentPage - 1)
+    }
+
+    private func completeOnboarding() {
+        store.hasCompletedOnboarding = true
+        store.save()
     }
 
     private func renumberChapters() {
@@ -668,6 +725,7 @@ struct OnboardingContainerView: View {
 
     private func commitHistory() {
         var chapters: [Chapter] = []
+
         for entry in previousChapters {
             let chapter = Chapter(
                 startDate: Calendar.current.startOfDay(for: entry.startDate),
@@ -676,16 +734,206 @@ struct OnboardingContainerView: View {
             )
             chapters.append(chapter)
         }
+
         let currentChapter = Chapter(
             startDate: Calendar.current.startOfDay(for: historyCurrentStart),
             chapterNumber: previousChapters.count + 1
         )
         chapters.append(currentChapter)
+
         store.importChapters(chapters)
     }
 
     static func formatDate(_ date: Date) -> String {
         StackDateFormatter.string(from: date)
+    }
+}
+
+private struct StackDatePicker: View {
+    @Binding var selection: Date
+    let range: ClosedRange<Date>
+
+    @State private var displayedMonth: Date
+
+    private let calendar = Calendar.current
+    private let columns = Array(repeating: GridItem(.flexible(), spacing: 8), count: 7)
+
+    init(selection: Binding<Date>, range: ClosedRange<Date>) {
+        self._selection = selection
+        self.range = range
+        self._displayedMonth = State(initialValue: Self.startOfMonth(for: selection.wrappedValue))
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack {
+                Button {
+                    guard let previousMonth = calendar.date(byAdding: .month, value: -1, to: displayedMonth) else { return }
+                    displayedMonth = Self.startOfMonth(for: previousMonth)
+                } label: {
+                    Image(systemName: "chevron.left")
+                        .font(StackTypography.callout)
+                        .foregroundStyle(canMoveBackward ? StackTheme.primaryText : StackTheme.secondaryText)
+                        .frame(width: 44, height: 44)
+                }
+                .disabled(!canMoveBackward)
+
+                Spacer()
+
+                Text(monthTitle(for: displayedMonth))
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.primaryText)
+
+                Spacer()
+
+                Button {
+                    guard let nextMonth = calendar.date(byAdding: .month, value: 1, to: displayedMonth) else { return }
+                    displayedMonth = Self.startOfMonth(for: nextMonth)
+                } label: {
+                    Image(systemName: "chevron.right")
+                        .font(StackTypography.callout)
+                        .foregroundStyle(canMoveForward ? StackTheme.primaryText : StackTheme.secondaryText)
+                        .frame(width: 44, height: 44)
+                }
+                .disabled(!canMoveForward)
+            }
+
+            weekdayHeader
+
+            LazyVGrid(columns: columns, spacing: 8) {
+                ForEach(dayCells.indices, id: \.self) { index in
+                    if let date = dayCells[index] {
+                        Button {
+                            selection = date
+                        } label: {
+                            Text(dayNumber(for: date))
+                                .font(StackTypography.caption)
+                                .foregroundStyle(dayForeground(for: date))
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 36)
+                                .background(dayBackground(for: date))
+                                .clipShape(Circle())
+                                .overlay(
+                                    Circle()
+                                        .stroke(dayBorder(for: date), lineWidth: 1)
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Color.clear
+                            .frame(height: 36)
+                    }
+                }
+            }
+
+            Text(OnboardingContainerView.formatDate(selection))
+                .font(StackTypography.caption)
+                .foregroundStyle(StackTheme.secondaryText)
+        }
+        .padding(18)
+        .background(StackTheme.surface1)
+        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadius, style: .continuous))
+        .onChange(of: selection) { _, newValue in
+            displayedMonth = Self.startOfMonth(for: newValue)
+        }
+    }
+
+    private var canMoveBackward: Bool {
+        guard let previousMonth = calendar.date(byAdding: .month, value: -1, to: displayedMonth) else { return false }
+        return Self.startOfMonth(for: previousMonth) >= Self.startOfMonth(for: range.lowerBound)
+    }
+
+    private var canMoveForward: Bool {
+        guard let nextMonth = calendar.date(byAdding: .month, value: 1, to: displayedMonth) else { return false }
+        return Self.startOfMonth(for: nextMonth) <= Self.startOfMonth(for: range.upperBound)
+    }
+
+    private var weekdayHeader: some View {
+        let symbols = calendar.shortStandaloneWeekdaySymbols
+        return HStack(spacing: 8) {
+            ForEach(symbols, id: \.self) { symbol in
+                Text(symbol.uppercased())
+                    .font(StackTypography.overline)
+                    .foregroundStyle(StackTheme.secondaryText)
+                    .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private var dayCells: [Date?] {
+        let startOfMonth = Self.startOfMonth(for: displayedMonth)
+        guard let dayRange = calendar.range(of: .day, in: .month, for: startOfMonth) else { return [] }
+
+        let weekday = calendar.component(.weekday, from: startOfMonth)
+        let leadingEmptyDays = (weekday - calendar.firstWeekday + 7) % 7
+
+        var cells = Array<Date?>(repeating: nil, count: leadingEmptyDays)
+
+        for day in dayRange {
+            if let date = calendar.date(byAdding: .day, value: day - 1, to: startOfMonth) {
+                cells.append(date)
+            }
+        }
+
+        return cells
+    }
+
+    private func monthTitle(for date: Date) -> String {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "MMMM yyyy"
+        return formatter.string(from: date)
+    }
+
+    private func dayNumber(for date: Date) -> String {
+        String(calendar.component(.day, from: date))
+    }
+
+    private func dayForeground(for date: Date) -> Color {
+        if calendar.isDate(date, inSameDayAs: selection) {
+            return StackTheme.background
+        }
+        return isSelectable(date) ? StackTheme.primaryText : StackTheme.secondaryText
+    }
+
+    private func dayBackground(for date: Date) -> Color {
+        if calendar.isDate(date, inSameDayAs: selection) {
+            return StackTheme.primaryText
+        }
+        return .clear
+    }
+
+    private func dayBorder(for date: Date) -> Color {
+        if calendar.isDate(date, inSameDayAs: selection) {
+            return StackTheme.primaryText
+        }
+        if calendar.isDateInToday(date) {
+            return StackTheme.ember
+        }
+        return .clear
+    }
+
+    private func isSelectable(_ date: Date) -> Bool {
+        range.contains(calendar.startOfDay(for: date))
+    }
+
+    private static func startOfMonth(for date: Date) -> Date {
+        let calendar = Calendar.current
+        let components = calendar.dateComponents([.year, .month], from: date)
+        return calendar.date(from: components) ?? date
+    }
+}
+
+private struct AnyButtonStyle: ButtonStyle {
+    private let makeBodyClosure: (Configuration) -> AnyView
+
+    init<Style: ButtonStyle>(_ style: Style) {
+        self.makeBodyClosure = { configuration in
+            AnyView(style.makeBody(configuration: configuration))
+        }
+    }
+
+    func makeBody(configuration: Configuration) -> some View {
+        makeBodyClosure(configuration)
     }
 }
 
