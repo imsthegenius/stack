@@ -54,18 +54,19 @@
   <h2>2. Data Stored on Your Device</h2>
   <p>
     All App data — your day count, pledge history, chapter history, and preferences — is stored locally on your device
-    using Apple's standard <code>UserDefaults</code> mechanism. This data is always available offline and
-    does not require an account to function. Your chapter and relay data is also synced via Apple's
-    iCloud Key-Value Store, which allows your progress to transfer between your own devices signed in
-    to the same Apple ID. This data is governed by
+    using Apple's standard <code>UserDefaults</code> mechanism so it is available for immediate use and offline reads.
+    Current releases also require Sign in with Apple after onboarding so your progress can be restored across devices,
+    reinstalls, and upgrades. Your chapter and relay data is also synced via Apple's iCloud Key-Value Store as a
+    secondary Apple-managed backup layer for devices signed in to the same Apple ID. This data is governed by
     <a href="https://www.apple.com/legal/privacy/">Apple's iCloud terms and privacy policy</a>.
   </p>
 
   <h2>2a. Account Data (Server-Side)</h2>
   <p>
     When you sign in with Apple, the App syncs your chapter history and relay history to our backend hosted on
-    <strong>Supabase</strong> (Supabase Inc., USA). This allows your progress to survive phone switches,
-    reinstalls, and upgrades. Synced data includes:
+    <strong>Supabase</strong> (Supabase Inc., USA). Because current releases require account sign-in after onboarding,
+    this server-side sync is part of how the App preserves your progress across phone switches, reinstalls, and
+    upgrades. Synced data includes:
   </p>
   <ul>
     <li>Chapter start/end dates and chapter numbers</li>
