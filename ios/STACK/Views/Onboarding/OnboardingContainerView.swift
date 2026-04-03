@@ -77,15 +77,16 @@ struct OnboardingContainerView: View {
 
     private var newPathDayCount: Int {
         let today = Calendar.current.startOfDay(for: Date())
-        let selected = Calendar.current.startOfDay(for: selectedDate)
+        let selected = clampedSelectableDate(selectedDate)
         return max(1, (Calendar.current.dateComponents([.day], from: selected, to: today).day ?? 0) + 1)
     }
 
     private var newPathSummary: String {
-        if Calendar.current.isDateInToday(selectedDate) {
+        let selected = clampedSelectableDate(selectedDate)
+        if Calendar.current.isDateInToday(selected) {
             return "Today becomes Day 1. Your first chapter starts now."
         }
-        return "Starting on \(Self.formatDate(selectedDate)) makes today Day \(newPathDayCount)."
+        return "Starting on \(Self.formatDate(selected)) makes today Day \(newPathDayCount)."
     }
 
     var body: some View {
@@ -429,13 +430,15 @@ struct OnboardingContainerView: View {
                 .padding(.top, 18)
 
             Button {
-                let startOfDay = Calendar.current.startOfDay(for: selectedDate)
-                let startDate = Calendar.current.isDateInToday(selectedDate)
+                let selected = clampedSelectableDate(selectedDate)
+                let startOfDay = Calendar.current.startOfDay(for: selected)
+                let startDate = Calendar.current.isDateInToday(selected)
                     ? Calendar.current.date(byAdding: .day, value: -1, to: startOfDay) ?? startOfDay
                     : startOfDay
                 store.createInitialChapter(startDate: startDate)
             } label: {
-                Text(Calendar.current.isDateInToday(selectedDate) ? "Start at Day 1" : "Start from \(Self.formatDate(selectedDate))")
+                let selected = clampedSelectableDate(selectedDate)
+                Text(Calendar.current.isDateInToday(selected) ? "Start at Day 1" : "Start from \(Self.formatDate(selected))")
             }
             .buttonStyle(PrimaryCTAButtonStyle())
             .padding(.top, 24)
@@ -454,8 +457,9 @@ struct OnboardingContainerView: View {
             StackDatePicker(selection: $historyCurrentStart, range: selectableDateRange)
                 .padding(.top, 14)
                 .onChange(of: historyCurrentStart) { _, newValue in
-                    if newValue > Date() {
-                        historyCurrentStart = Date()
+                    let clamped = clampedSelectableDate(newValue)
+                    if clamped != newValue {
+                        historyCurrentStart = clamped
                     }
                 }
 
@@ -647,10 +651,12 @@ struct OnboardingContainerView: View {
 
                 ToolbarItem(placement: .confirmationAction) {
                     Button("Add") {
+                        let startDate = clampedSelectableDate(addChapterStart)
+                        let endDate = clampedSelectableDate(addChapterEnd)
                         let entry = PreviousChapterEntry(
                             number: previousChapters.count + 1,
-                            startDate: Calendar.current.startOfDay(for: addChapterStart),
-                            endDate: Calendar.current.startOfDay(for: addChapterEnd)
+                            startDate: startDate,
+                            endDate: endDate
                         )
                         previousChapters.append(entry)
                         renumberChapters()
@@ -726,22 +732,38 @@ struct OnboardingContainerView: View {
     private func commitHistory() {
         var chapters: [Chapter] = []
 
-        for entry in previousChapters {
+        let sanitizedPreviousChapters = previousChapters
+            .map { entry in
+                (
+                    startDate: clampedSelectableDate(entry.startDate),
+                    endDate: clampedSelectableDate(entry.endDate)
+                )
+            }
+            .filter { $0.endDate > $0.startDate }
+
+        for (index, entry) in sanitizedPreviousChapters.enumerated() {
             let chapter = Chapter(
-                startDate: Calendar.current.startOfDay(for: entry.startDate),
-                endDate: Calendar.current.startOfDay(for: entry.endDate),
-                chapterNumber: entry.number
+                startDate: entry.startDate,
+                endDate: entry.endDate,
+                chapterNumber: index + 1
             )
             chapters.append(chapter)
         }
 
         let currentChapter = Chapter(
-            startDate: Calendar.current.startOfDay(for: historyCurrentStart),
-            chapterNumber: previousChapters.count + 1
+            startDate: clampedSelectableDate(historyCurrentStart),
+            chapterNumber: sanitizedPreviousChapters.count + 1
         )
         chapters.append(currentChapter)
 
         store.importChapters(chapters)
+    }
+
+    private func clampedSelectableDate(_ date: Date) -> Date {
+        let startOfDay = Calendar.current.startOfDay(for: date)
+        let lowerBound = Calendar.current.startOfDay(for: selectableDateRange.lowerBound)
+        let upperBound = Calendar.current.startOfDay(for: selectableDateRange.upperBound)
+        return min(max(startOfDay, lowerBound), upperBound)
     }
 
     static func formatDate(_ date: Date) -> String {
@@ -804,6 +826,7 @@ private struct StackDatePicker: View {
                 ForEach(dayCells.indices, id: \.self) { index in
                     if let date = dayCells[index] {
                         Button {
+                            guard isSelectable(date) else { return }
                             selection = date
                         } label: {
                             Text(dayNumber(for: date))
@@ -819,6 +842,7 @@ private struct StackDatePicker: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                        .disabled(!isSelectable(date))
                     } else {
                         Color.clear
                             .frame(height: 36)
@@ -834,7 +858,11 @@ private struct StackDatePicker: View {
         .background(StackTheme.surface1)
         .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadius, style: .continuous))
         .onChange(of: selection) { _, newValue in
-            displayedMonth = Self.startOfMonth(for: newValue)
+            let clamped = clampedSelection(newValue)
+            if clamped != newValue {
+                selection = clamped
+            }
+            displayedMonth = Self.startOfMonth(for: clamped)
         }
     }
 
@@ -914,6 +942,13 @@ private struct StackDatePicker: View {
 
     private func isSelectable(_ date: Date) -> Bool {
         range.contains(calendar.startOfDay(for: date))
+    }
+
+    private func clampedSelection(_ date: Date) -> Date {
+        let startOfDay = calendar.startOfDay(for: date)
+        let lowerBound = calendar.startOfDay(for: range.lowerBound)
+        let upperBound = calendar.startOfDay(for: range.upperBound)
+        return min(max(startOfDay, lowerBound), upperBound)
     }
 
     private static func startOfMonth(for date: Date) -> Date {
