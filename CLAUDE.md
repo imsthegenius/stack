@@ -34,25 +34,29 @@ supabase/
   seed.sql         Run once after schema
 ```
 
-## Design Tokens
+## Design Tokens (V4 — "Marks on Dark Stone")
 ```
-Background:    #0C0B09  — Color(hex: "0C0B09") — everywhere, flat, no gradient
-Primary text:  #F4F2EE  — StackTheme.primaryText
+Background:    #0C0B09  — StackTheme.background — everywhere, flat, no gradient
+Surface 1:     #14120F  — StackTheme.surface1
+Surface 2:     #1C1916  — StackTheme.surface2 — cards, elevated content
+Surface 3:     #252220  — StackTheme.surface3 — secondary buttons, skeleton loaders
+Primary text:  #FFFFFF  — StackTheme.primaryText (true white)
 Secondary:     #A09890  — StackTheme.secondaryText
-Tertiary:      #8A857F  — StackTheme.tertiaryText
 Ghost:         #2E2C2A  — StackTheme.ghost
-Stack gold:    #C8A96E  — chip circles + earned chip borders ONLY
+Ember:         #CB6040  — StackTheme.ember — pledge ring, relay accent, active states
 Milestone:     #FFFFFF  — Color.white — counter on milestone day ONLY
 Separator:     #1C1B19  — StackTheme.separator
 ```
 
 ## Typography Rules (NO EXCEPTIONS)
+- `Instrument Serif Regular` — display (38pt), title (28pt), subhead (22pt) headings ONLY
 - `SF Pro Thin` — hero counter (88pt) ONLY
-- `SF Pro Light` — 18pt and above (titles, headers, display text)
+- `SF Pro Light` — headline (20pt)
 - `SF Pro Regular` — 17pt and below (body text, labels, buttons, legal, section headers)
 - `Georgia regular` — relay message text ONLY: `Font.custom("Georgia", size: 19)`
 - FORBIDDEN: `.medium`, `.bold`, `.semibold`, `.heavy`, `.black` anywhere in the app
 - FORBIDDEN: `Text("...").fontWeight(.bold)` or any weight heavier than `.regular`
+- FORBIDDEN: Text under 13pt anywhere in the app
 
 ## Key Mechanics
 
@@ -117,11 +121,13 @@ Separator:     #1C1B19  — StackTheme.separator
 - No "You're amazing!" or wellness copy
 - No push notifications of any kind
 - No SF Pro Medium, Bold, Semibold, Heavy, or Black
-- No gradients
-- No #C8A96E gold on the counter number (only on chip circles)
-- No rounded card backgrounds in lists
+- No decorative gradients (functional shimmer/glow via opacity permitted)
+- No gold (#C8A96E) — use ember (#CB6040) via StackTheme.ember
+- No cards-everywhere — cards only for relay messages and self-contained tappable units
 - No `.ultraThinMaterial` behind the hero counter number
 - No warm black (#0C0B09) widget backgrounds — use `.containerBackground(.clear)`
+- No text under 13pt anywhere in the app
+- No tertiaryText color — use secondaryText or primaryText
 
 ## Build Command
 ```bash

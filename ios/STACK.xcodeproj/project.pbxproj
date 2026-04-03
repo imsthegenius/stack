@@ -58,6 +58,13 @@
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		D7A1B3462F6D000000000001 /* Exceptions for "STACK" folder in "STACK" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 105FC5792E9EAD3100EA8BCF /* STACK */;
+		};
 		XXC43143BADB22E7C4E0EAXX /* Exceptions for "STACKWidget" folder in "STACKWidget" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
@@ -70,6 +77,9 @@
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		105FC57C2E9EAD3100EA8BCF /* STACK */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				D7A1B3462F6D000000000001 /* Exceptions for "STACK" folder in "STACK" target */,
+			);
 			path = STACK;
 			sourceTree = "<group>";
 		};
@@ -505,6 +515,7 @@
 				DEVELOPMENT_TEAM = 6VLN4PNWB2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = STACK/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -543,6 +554,7 @@
 				DEVELOPMENT_TEAM = 6VLN4PNWB2;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = STACK/Info.plist;
 				INFOPLIST_KEY_ITSAppUsesNonExemptEncryption = NO;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
