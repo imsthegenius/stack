@@ -35,7 +35,7 @@ struct TodayView: View {
                         switchToJourneyTab?()
                     } label: {
                         Text("CHAPTER \(chapter.chapterNumber)")
-                            .font(StackTypography.overline)
+                            .font(StackTypography.caption)
                             .tracking(1.5)
                             .foregroundStyle(StackTheme.secondaryText)
                             .padding(.horizontal, 12)
@@ -265,7 +265,7 @@ struct TodayView: View {
                     .font(StackTypography.heroCounter)
                     .foregroundStyle(store.isMilestoneDay ? StackTheme.milestoneWhite : StackTheme.primaryText)
                     .contentTransition(.numericText())
-                    .scaleEffect(counterPulse ? 1.0 : 1.0)
+                    .scaleEffect(counterPulse ? 0.98 : 1.0)
             }
             .frame(width: 200, height: 200)
             .scaleEffect(counterDidAppear ? 1.0 : 0.97)
@@ -292,10 +292,11 @@ struct TodayView: View {
                     pledgedToday = true
                 }
 
-                // Counter pulse micro-animation
+                // Counter pulse micro-animation (0.98 → 1.0)
                 if !reduceMotion {
-                    withAnimation(.spring(duration: 0.15)) {
-                        counterPulse = true
+                    counterPulse = true
+                    withAnimation(.spring(duration: 0.25)) {
+                        counterPulse = false
                     }
                 }
 
