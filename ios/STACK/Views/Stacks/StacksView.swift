@@ -120,7 +120,7 @@ struct StacksView: View {
         .opacity(listAppeared ? 1.0 : 0.0)
         .offset(y: listAppeared ? 0 : 6)
         .animation(
-            reduceMotion ? nil : StackAnimation.cardEntrance.delay(Double(index) * StackAnimation.stagger),
+            reduceMotion ? nil : StackAnimation.cardEntrance.delay(Double(index) * 0.05),
             value: listAppeared
         )
     }
@@ -156,7 +156,7 @@ struct StacksView: View {
         .opacity(listAppeared ? 1.0 : 0.0)
         .offset(y: listAppeared ? 0 : 6)
         .animation(
-            reduceMotion ? nil : StackAnimation.cardEntrance.delay(Double(index) * StackAnimation.stagger),
+            reduceMotion ? nil : StackAnimation.cardEntrance.delay(Double(index) * 0.05),
             value: listAppeared
         )
     }
