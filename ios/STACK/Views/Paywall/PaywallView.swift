@@ -131,7 +131,7 @@ struct PaywallView: View {
                         Link("Privacy Policy", destination: URL(string: "https://stack.twohundred.ai/privacy.html")!)
                             .underline()
                     }
-                    .font(.system(size: 12, weight: .regular))
+                    .font(StackTypography.overline)
                     .foregroundStyle(StackTheme.secondaryText)
                     .padding(.top, 16)
                 }

@@ -61,7 +61,7 @@ struct MilestoneMomentView: View {
 
             VStack(spacing: 0) {
                 Text("CHAPTER \(chapterNumber) · \(headerLabel)")
-                    .font(.system(size: 11, weight: .regular))
+                    .font(StackTypography.overline)
                     .tracking(1.5)
                     .foregroundStyle(StackTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
