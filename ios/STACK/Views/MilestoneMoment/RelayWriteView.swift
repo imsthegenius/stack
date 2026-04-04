@@ -29,7 +29,7 @@ struct RelayWriteView: View {
                     Button { onDismiss() } label: {
                         Image(systemName: "xmark")
                             .font(.system(size: 16, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .foregroundStyle(StackTheme.secondaryText)
                             .padding(12)
                     }
                     .accessibilityLabel("Close")
@@ -40,20 +40,21 @@ struct RelayWriteView: View {
                 Text(writePrompt)
                     .font(StackTypography.body)
                     .foregroundStyle(StackTheme.secondaryText)
-                    .padding(.horizontal, 28)
+                    .padding(.horizontal, StackSpacing.horizontalPadding)
                     .padding(.top, 12)
 
                 ZStack(alignment: .topLeading) {
                     if messageText.isEmpty {
                         Text(writePlaceholder)
                             .font(Font.custom("Georgia", size: 18))
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .foregroundStyle(StackTheme.secondaryText)
                             .padding(.top, 8)
                             .allowsHitTesting(false)
                     }
                     TextEditor(text: $messageText)
                         .font(Font.custom("Georgia", size: 18))
                         .foregroundStyle(StackTheme.primaryText)
+                        .tint(StackTheme.ember)
                         .scrollContentBackground(.hidden)
                         .onChange(of: messageText) { _, new in
                             if new.count > maxLength {
@@ -62,14 +63,10 @@ struct RelayWriteView: View {
                         }
                 }
                 .padding(16)
-                .background(StackTheme.cardBackground)
+                .background(StackTheme.surface2)
                 .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadius))
-                .overlay(
-                    RoundedRectangle(cornerRadius: StackTheme.cardRadius)
-                        .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-                )
-                .padding(.horizontal, 28)
-                .padding(.top, 24)
+                .padding(.horizontal, StackSpacing.horizontalPadding)
+                .padding(.top, StackSpacing.lg)
                 .frame(minHeight: 200)
                 .opacity(sentForward ? 0.3 : 1.0)
                 .animation(reduceMotion ? .none : .easeOut(duration: 0.3), value: sentForward)
@@ -78,55 +75,57 @@ struct RelayWriteView: View {
                     .font(StackTypography.caption)
                     .foregroundStyle(
                         (maxLength - messageText.count) < 50
-                            ? StackTheme.gold
-                            : StackTheme.tertiaryText
+                            ? StackTheme.ember
+                            : StackTheme.secondaryText
                     )
                     .frame(maxWidth: .infinity, alignment: .trailing)
-                    .padding(.horizontal, 28)
-                    .padding(.top, 8)
+                    .padding(.horizontal, StackSpacing.horizontalPadding)
+                    .padding(.top, StackSpacing.sm)
 
                 Spacer()
 
-                Button {
-                    Task { await submit() }
-                } label: {
-                    Group {
-                        if sentForward {
-                            HStack(spacing: 6) {
-                                Image(systemName: "checkmark")
-                                    .font(.system(size: 13, weight: .medium))
-                                Text("Sent forward.")
+                Group {
+                    if sentForward {
+                        Text("Sent forward.")
+                            .font(StackTypography.body)
+                            .foregroundStyle(StackTheme.primaryText)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .transition(.opacity)
+                    } else {
+                        Button {
+                            Task { await submit() }
+                        } label: {
+                            if isSubmitting {
+                                ProgressView()
+                                    .tint(StackTheme.background)
+                            } else {
+                                Text("Send forward")
                             }
-                        } else if isSubmitting {
-                            ProgressView()
-                                .tint(StackTheme.background)
-                        } else {
-                            Text("Send forward")
                         }
+                        .buttonStyle(PrimaryCTAButtonStyle())
+                        .disabled(
+                            isSubmitting ||
+                            messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+                        )
+                        .opacity(
+                            (isSubmitting || messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                            ? 0.5 : 1.0
+                        )
                     }
                 }
-                .buttonStyle(GoldCTAButtonStyle())
-                .disabled(
-                    isSubmitting ||
-                    messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
-                    sentForward
-                )
-                .opacity(
-                    (isSubmitting || messageText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || sentForward)
-                    ? 0.5 : 1.0
-                )
-                .padding(.horizontal, 28)
+                .padding(.horizontal, StackSpacing.horizontalPadding)
 
                 if showFilterError {
                     Text("Your message couldn't be sent. Please revise it.")
                         .font(StackTypography.caption)
-                        .foregroundStyle(StackTheme.tertiaryText)
+                        .foregroundStyle(StackTheme.secondaryText)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 10)
                 } else if showError {
                     Text("Something went wrong. Try again.")
                         .font(StackTypography.caption)
-                        .foregroundStyle(StackTheme.tertiaryText)
+                        .foregroundStyle(StackTheme.secondaryText)
                         .frame(maxWidth: .infinity, alignment: .center)
                         .padding(.top, 10)
                 }
@@ -135,13 +134,13 @@ struct RelayWriteView: View {
                     onDismiss()
                 } label: {
                     Text("Later")
-                        .font(.system(size: 13, weight: .regular))
-                        .foregroundStyle(StackTheme.tertiaryText)
+                        .font(StackTypography.overline)
+                        .foregroundStyle(StackTheme.secondaryText)
                         .padding(.vertical, 12)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.top, 16)
-                .padding(.bottom, 48)
+                .padding(.bottom, StackSpacing.xxl)
             }
         }
     }
