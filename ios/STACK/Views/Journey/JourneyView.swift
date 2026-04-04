@@ -3,6 +3,7 @@ import SwiftUI
 struct JourneyView: View {
     let store: StackStore
     @State private var showNewChapterConfirm: Bool = false
+    @State private var visibleRows: Int = 0
 
     var body: some View {
         NavigationStack {
@@ -32,13 +33,23 @@ struct JourneyView: View {
                                 }
                             }
                         }
+                        .entranceAnimation(visible: index < visibleRows)
+                        .animation(
+                            StackAnimation.cardEntrance.delay(Double(index) * StackAnimation.stagger),
+                            value: visibleRows
+                        )
+                    }
+                    .onAppear {
+                        withAnimation {
+                            visibleRows = chapters.count
+                        }
                     }
 
                     // Summary — no card, just text on the void
                     VStack(spacing: 4) {
                         Text("\(store.totalDays) days stacked")
                             .font(.system(size: 15, weight: .regular))
-                            .foregroundStyle(StackTheme.secondaryText)
+                            .foregroundStyle(StackTheme.primaryText)
 
                         if store.chapters.count > 1 {
                             Text("Across \(store.chapters.count) chapters")
@@ -53,14 +64,8 @@ struct JourneyView: View {
                         showNewChapterConfirm = true
                     } label: {
                         Text("Start new chapter")
-                            .font(StackTypography.cta)
-                            .foregroundStyle(StackTheme.primaryText)
-                            .frame(maxWidth: .infinity)
-                            .padding(.vertical, 14)
-                            .background(StackTheme.surface3)
-                            .clipShape(.rect(cornerRadius: StackTheme.cardRadiusSmall))
                     }
-                    .buttonStyle(PressScaleButtonStyle())
+                    .buttonStyle(SurfaceButtonStyle())
                     .padding(.horizontal, 28)
                     .padding(.top, 20)
                     .padding(.bottom, 32)
@@ -97,11 +102,11 @@ struct JourneyView: View {
             Spacer().frame(height: 14)
             Circle()
                 .fill(isCurrentChapter ? StackTheme.ember : StackTheme.ghost)
-                .frame(width: isCurrentChapter ? 10 : 6, height: isCurrentChapter ? 10 : 6)
+                .frame(width: isCurrentChapter ? 8 : 6, height: isCurrentChapter ? 8 : 6)
             if !isLast {
                 Rectangle()
                     .fill(StackTheme.ghost)
-                    .frame(width: 1.5)
+                    .frame(width: 1)
                     .frame(maxHeight: .infinity)
             }
         }
