@@ -269,6 +269,9 @@ struct SecondaryCTAButtonStyle: ButtonStyle {
     }
 }
 
+// Spec alias used by onboarding redesign tickets.
+typealias SurfaceButtonStyle = SecondaryCTAButtonStyle
+
 // MARK: - View Extensions
 
 extension View {
