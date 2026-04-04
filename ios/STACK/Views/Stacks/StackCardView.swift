@@ -32,9 +32,9 @@ struct StackCardView: View {
                     .frame(width: 128, height: 128)
 
                 Text(milestoneLabel.uppercased())
-                    .font(StackTypography.headline)
+                    .font(StackTypography.subhead)
                     .tracking(2)
-                    .foregroundStyle(StackTheme.primaryText)
+                    .foregroundStyle(.white)
                     .padding(.top, 28)
 
                 Text("One at a time.")
@@ -46,12 +46,12 @@ struct StackCardView: View {
                     VStack(spacing: 4) {
                         Text("Since \(StackDateFormatter.string(from: info.chapter.startDate))")
                             .font(StackTypography.caption)
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .foregroundStyle(StackTheme.secondaryText)
 
                         Text("CHAPTER \(info.chapter.chapterNumber)")
                             .font(StackTypography.caption)
                             .tracking(1.5)
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .foregroundStyle(StackTheme.secondaryText)
                     }
                     .padding(.top, 24)
                 }
@@ -72,9 +72,9 @@ struct StackCardView: View {
                             .foregroundStyle(StackTheme.primaryText)
                             .padding(.horizontal, 20)
                             .padding(.vertical, 12)
-                            .background(StackTheme.cardBackground)
+                            .background(StackTheme.surface2)
                             .clipShape(Capsule())
-                            .overlay(Capsule().stroke(StackTheme.cardBorder, lineWidth: 1.0))
+                            .overlay(Capsule().stroke(StackTheme.ghost, lineWidth: 1.0))
                         }
                     }
 
@@ -90,9 +90,9 @@ struct StackCardView: View {
                         .foregroundStyle(StackTheme.secondaryText)
                         .padding(.horizontal, 20)
                         .padding(.vertical, 12)
-                        .background(StackTheme.cardBackground)
+                        .background(StackTheme.surface2)
                         .clipShape(Capsule())
-                        .overlay(Capsule().stroke(StackTheme.cardBorder, lineWidth: 1.0))
+                        .overlay(Capsule().stroke(StackTheme.ghost, lineWidth: 1.0))
                     }
                 }
                 .padding(.bottom, 32)
@@ -111,11 +111,11 @@ struct StackCardView: View {
     private var stackCircle: some View {
         ZStack {
             Circle()
-                .stroke(StackTheme.primaryText, lineWidth: 2)
+                .stroke(StackTheme.ember, lineWidth: 2)
 
             Text(Milestone.shortLabel(for: milestoneDays))
                 .font(.system(size: 54, weight: .regular))
-                .foregroundStyle(StackTheme.primaryText)
+                .foregroundStyle(.white)
         }
     }
 
@@ -141,18 +141,18 @@ struct StackExportView: View {
 
             ZStack {
                 Circle()
-                    .stroke(StackTheme.primaryText, lineWidth: 2)
+                    .stroke(StackTheme.ember, lineWidth: 2)
                     .frame(width: 128, height: 128)
 
                 Text(Milestone.shortLabel(for: milestoneDays))
                     .font(.system(size: 54, weight: .regular))
-                    .foregroundStyle(StackTheme.primaryText)
+                    .foregroundStyle(.white)
             }
 
             Text((Milestone.label(for: milestoneDays) ?? "").uppercased())
-                .font(StackTypography.headline)
+                .font(StackTypography.subhead)
                 .tracking(2)
-                .foregroundStyle(StackTheme.primaryText)
+                .foregroundStyle(.white)
                 .padding(.top, 28)
 
             Text("One at a time.")
@@ -165,7 +165,7 @@ struct StackExportView: View {
             Text("STACK")
                 .font(StackTypography.overline)
                 .tracking(2)
-                .foregroundStyle(StackTheme.tertiaryText)
+                .foregroundStyle(StackTheme.secondaryText)
                 .padding(.bottom, 24)
         }
         .frame(width: 390, height: 500)
