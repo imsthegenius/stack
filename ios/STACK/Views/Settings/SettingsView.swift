@@ -16,129 +16,113 @@ struct SettingsView: View {
 
     var body: some View {
         NavigationStack {
-            ScrollView {
-                VStack(spacing: 0) {
-                    Text("Settings")
-                        .font(StackTypography.title)
-                        .foregroundStyle(StackTheme.primaryText)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .padding(.horizontal, 28)
-                        .padding(.top, 16)
-                        .padding(.bottom, 8)
+            List {
+                Text("Settings")
+                    .font(StackTypography.title)
+                    .foregroundStyle(StackTheme.primaryText)
+                    .listRowBackground(Color.clear)
+                    .listRowSeparator(.hidden)
+                    .listRowInsets(EdgeInsets(top: 16, leading: 28, bottom: 8, trailing: 28))
 
-                    sectionHeader("WIDGET")
-
-                    VStack(spacing: 0) {
-                        Button {
-                            showWidgetInstructions = true
-                        } label: {
-                            settingsRow(title: "Add to lock screen", trailing: {
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12, weight: .regular))
-                                    .foregroundStyle(StackTheme.tertiaryText)
-                            })
+                Section {
+                    Button { showWidgetInstructions = true } label: {
+                        settingsRow("Add to lock screen") {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundStyle(StackTheme.secondaryText)
                         }
                     }
-                    .background(StackTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
-                            .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-                    )
-                    .padding(.horizontal, 20)
+                    .listRowBackground(StackTheme.surface1)
+                    .listRowSeparatorTint(StackTheme.separator)
+                } header: {
+                    overlineHeader("WIDGET")
+                }
 
-                    sectionHeader("STACK")
-                        .padding(.top, 24)
-
-                    VStack(spacing: 0) {
-                        if store.lifetimePurchased {
-                            settingsRow(title: "Lifetime · Unlocked", trailing: { EmptyView() })
-                        } else {
-                            Button {
-                                showPaywall = true
-                            } label: {
-                                settingsRow(title: "Unlock STACK", trailing: {
-                                    if !priceString.isEmpty {
-                                        Text("· \(priceString)")
-                                            .font(StackTypography.footnote)
-                                            .foregroundStyle(StackTheme.gold)
-                                    }
-                                })
-                            }
-
-                            StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
-
-                            Button {
-                                Task { await restoreSettingsPurchases() }
-                            } label: {
-                                HStack {
-                                    Text("Restore purchases")
-                                        .font(StackTypography.body)
-                                        .foregroundStyle(StackTheme.secondaryText)
-                                    Spacer()
-                                    if isRestoring {
-                                        ProgressView()
-                                            .tint(StackTheme.secondaryText)
-                                            .scaleEffect(0.75)
-                                    }
+                Section {
+                    if store.lifetimePurchased {
+                        settingsRow("Lifetime \u{00B7} Unlocked") { EmptyView() }
+                            .listRowBackground(StackTheme.surface1)
+                            .listRowSeparatorTint(StackTheme.separator)
+                    } else {
+                        Button { showPaywall = true } label: {
+                            settingsRow("Unlock STACK") {
+                                if !priceString.isEmpty {
+                                    Text("\u{00B7} \(priceString)")
+                                        .font(StackTypography.footnote)
+                                        .foregroundStyle(StackTheme.ember)
                                 }
-                                .padding(.horizontal, 20)
-                                .padding(.vertical, 16)
-                                .contentShape(Rectangle())
                             }
-                            .disabled(isRestoring)
                         }
-
-                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
+                        .listRowBackground(StackTheme.surface1)
+                        .listRowSeparatorTint(StackTheme.separator)
 
                         Button {
-                            showNewChapterConfirmation = true
-                        } label: {
-                            settingsRow(title: "Start New Chapter", trailing: {
-                                Image(systemName: "chevron.right")
-                                    .font(.system(size: 12, weight: .regular))
-                                    .foregroundStyle(StackTheme.tertiaryText)
-                            })
-                        }
-                    }
-                    .background(StackTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
-                            .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-                    )
-                    .padding(.horizontal, 20)
-
-                    sectionHeader("ACCOUNT")
-                        .padding(.top, 24)
-
-                    if auth.isSignedIn {
-                        VStack(spacing: 0) {
-                            if let email = auth.userEmail {
-                                settingsRow(title: email, trailing: { EmptyView() })
-                                StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
-                            }
-
-                            Button {
-                                auth.signOut()
-                            } label: {
-                                settingsRow(title: "Sign Out", trailing: { EmptyView() })
-                            }
-                        }
-                        .background(StackTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
-                                .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-                        )
-                        .padding(.horizontal, 20)
-
-                        Button {
-                            showDeleteConfirmation = true
+                            Task { await restoreSettingsPurchases() }
                         } label: {
                             HStack {
+                                Text("Restore purchases")
+                                    .font(StackTypography.callout)
+                                    .foregroundStyle(StackTheme.secondaryText)
+                                Spacer()
+                                if isRestoring {
+                                    ProgressView()
+                                        .tint(StackTheme.secondaryText)
+                                        .scaleEffect(0.75)
+                                }
+                            }
+                        }
+                        .disabled(isRestoring)
+                        .listRowBackground(StackTheme.surface1)
+                        .listRowSeparatorTint(StackTheme.separator)
+                    }
+
+                    Button { showNewChapterConfirmation = true } label: {
+                        settingsRow("Start New Chapter") {
+                            Image(systemName: "chevron.right")
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundStyle(StackTheme.secondaryText)
+                        }
+                    }
+                    .listRowBackground(StackTheme.surface1)
+                    .listRowSeparatorTint(StackTheme.separator)
+                } header: {
+                    overlineHeader("STACK")
+                }
+
+                Section {
+                    if auth.isSignedIn {
+                        if let email = auth.userEmail {
+                            settingsRow(email) { EmptyView() }
+                                .listRowBackground(StackTheme.surface1)
+                                .listRowSeparatorTint(StackTheme.separator)
+                        }
+
+                        Button { auth.signOut() } label: {
+                            settingsRow("Sign Out") { EmptyView() }
+                        }
+                        .listRowBackground(StackTheme.surface1)
+                        .listRowSeparatorTint(StackTheme.separator)
+                    } else {
+                        Button { showSignInSheet = true } label: {
+                            settingsRow("Sign in with Apple") {
+                                Image(systemName: "apple.logo")
+                                    .font(.system(size: 14, weight: .regular))
+                                    .foregroundStyle(StackTheme.secondaryText)
+                            }
+                        }
+                        .listRowBackground(StackTheme.surface1)
+                        .listRowSeparatorTint(StackTheme.separator)
+                    }
+                } header: {
+                    overlineHeader("ACCOUNT")
+                }
+
+                if auth.isSignedIn {
+                    Section {
+                        Button { showDeleteConfirmation = true } label: {
+                            HStack {
                                 Text("Delete Account")
-                                    .font(StackTypography.body)
+                                    .font(StackTypography.callout)
                                     .foregroundStyle(StackTheme.destructive)
                                 Spacer()
                                 if isDeletingAccount {
@@ -147,117 +131,75 @@ struct SettingsView: View {
                                         .scaleEffect(0.75)
                                 }
                             }
-                            .padding(.horizontal, 20)
-                            .padding(.vertical, 16)
-                            .contentShape(Rectangle())
                         }
                         .disabled(isDeletingAccount)
-                        .background(StackTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
-                                .stroke(StackTheme.destructive.opacity(0.3), lineWidth: 1.0)
-                        )
-                        .padding(.horizontal, 20)
-                        .padding(.top, 12)
-                    } else {
-                        VStack(spacing: 0) {
-                            Button {
-                                showSignInSheet = true
-                            } label: {
-                                settingsRow(title: "Sign in with Apple", trailing: {
-                                    Image(systemName: "apple.logo")
-                                        .font(.system(size: 14, weight: .regular))
-                                        .foregroundStyle(StackTheme.secondaryText)
-                                })
-                            }
-                        }
-                        .background(StackTheme.cardBackground)
-                        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
-                        .overlay(
-                            RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
-                                .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-                        )
-                        .padding(.horizontal, 20)
+                        .listRowBackground(StackTheme.surface1)
                     }
+                }
 
-                    sectionHeader("LEGAL")
-                        .padding(.top, 24)
-
-                    VStack(spacing: 0) {
-                        Link(destination: URL(string: "https://stack.twohundred.ai/privacy.html")!) {
-                            settingsRow(title: "Privacy Policy", trailing: {
-                                Image(systemName: "arrow.up.right")
-                                    .font(.system(size: 12, weight: .regular))
-                                    .foregroundStyle(StackTheme.tertiaryText)
-                            })
-                        }
-
-                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
-
-                        Link(destination: URL(string: "https://stack.twohundred.ai/terms.html")!) {
-                            settingsRow(title: "Terms of Use", trailing: {
-                                Image(systemName: "arrow.up.right")
-                                    .font(.system(size: 12, weight: .regular))
-                                    .foregroundStyle(StackTheme.tertiaryText)
-                            })
-                        }
-
-                        StackTheme.separator.frame(height: 0.5).padding(.horizontal, 20)
-
-                        Link(destination: URL(string: "mailto:hello@twohundred.ai")!) {
-                            settingsRow(title: "Contact Support", trailing: {
-                                Image(systemName: "envelope")
-                                    .font(.system(size: 12, weight: .regular))
-                                    .foregroundStyle(StackTheme.tertiaryText)
-                            })
+                Section {
+                    Link(destination: URL(string: "https://stack.twohundred.ai/privacy.html")!) {
+                        settingsRow("Privacy Policy") {
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundStyle(StackTheme.secondaryText)
                         }
                     }
-                    .background(StackTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
-                            .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-                    )
-                    .padding(.horizontal, 20)
+                    .listRowBackground(StackTheme.surface1)
+                    .listRowSeparatorTint(StackTheme.separator)
 
-                    sectionHeader("ABOUT")
-                        .padding(.top, 24)
+                    Link(destination: URL(string: "https://stack.twohundred.ai/terms.html")!) {
+                        settingsRow("Terms of Use") {
+                            Image(systemName: "arrow.up.right")
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundStyle(StackTheme.secondaryText)
+                        }
+                    }
+                    .listRowBackground(StackTheme.surface1)
+                    .listRowSeparatorTint(StackTheme.separator)
 
+                    Link(destination: URL(string: "mailto:hello@twohundred.ai")!) {
+                        settingsRow("Contact Support") {
+                            Image(systemName: "envelope")
+                                .font(.system(size: 12, weight: .regular))
+                                .foregroundStyle(StackTheme.secondaryText)
+                        }
+                    }
+                    .listRowBackground(StackTheme.surface1)
+                    .listRowSeparatorTint(StackTheme.separator)
+                } header: {
+                    overlineHeader("LEGAL")
+                }
+
+                Section {
                     VStack(alignment: .leading, spacing: 12) {
                         if let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String {
                             Text("Version \(version)")
-                                .font(.system(size: 13, weight: .regular))
+                                .font(StackTypography.overline)
                                 .foregroundStyle(StackTheme.secondaryText)
                         }
 
                         Text("No notifications. No streaks. No social.")
-                            .font(.system(size: 13, weight: .regular))
+                            .font(StackTypography.overline)
                             .foregroundStyle(StackTheme.secondaryText)
 
                         Text(auth.isSignedIn
                              ? "Your data is backed up when signed in."
                              : "Sign in to back up your progress across devices.")
                             .font(StackTypography.caption)
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .foregroundStyle(StackTheme.secondaryText)
                     }
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .padding(20)
-                    .background(StackTheme.cardBackground)
-                    .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: StackTheme.cardRadiusSmall, style: .continuous)
-                            .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-                    )
-                    .padding(.horizontal, 20)
-
-                    #if DEBUG
-                    debugSection
-                    #endif
+                    .listRowBackground(StackTheme.surface1)
+                } header: {
+                    overlineHeader("ABOUT")
                 }
-                .padding(.top, 8)
-                .padding(.bottom, 32)
+
+                #if DEBUG
+                debugSection
+                #endif
             }
+            .listStyle(.insetGrouped)
+            .scrollContentBackground(.hidden)
             .background(StackTheme.background)
             .navigationTitle("")
             .toolbarBackground(.ultraThinMaterial, for: .navigationBar)
@@ -300,6 +242,28 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Helpers
+
+    private func settingsRow<Trailing: View>(_ title: String, @ViewBuilder trailing: () -> Trailing) -> some View {
+        HStack {
+            Text(title)
+                .font(StackTypography.callout)
+                .foregroundStyle(StackTheme.primaryText)
+            Spacer()
+            trailing()
+        }
+    }
+
+    private func overlineHeader(_ title: String) -> some View {
+        Text(title)
+            .font(StackTypography.overline)
+            .tracking(1.5)
+            .foregroundStyle(StackTheme.secondaryText)
+            .textCase(nil)
+    }
+
+    // MARK: - Actions
+
     private func loadPrice() async {
         do {
             let offerings = try await Purchases.shared.offerings()
@@ -335,18 +299,17 @@ struct SettingsView: View {
         }
     }
 
+    // MARK: - Debug
+
     #if DEBUG
     @State private var debugDay: Int = 1
     private let debugRelayDays = [1, 2, 3, 7, 14, 30, 60, 90, 180, 365, 1000]
 
     private var debugSection: some View {
-        VStack(spacing: 0) {
-            sectionHeader("DEBUG (stripped from release)")
-                .padding(.top, 24)
-
+        Section {
             HStack {
                 Text("Jump to day")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(StackTypography.callout)
                     .foregroundStyle(StackTheme.primaryText)
                 Spacer()
                 Picker("Day", selection: $debugDay) {
@@ -356,8 +319,7 @@ struct SettingsView: View {
                 }
                 .tint(StackTheme.secondaryText)
             }
-            .padding(.horizontal, 28)
-            .padding(.vertical, 12)
+            .listRowBackground(StackTheme.surface1)
 
             Button {
                 guard let chapter = store.currentChapter,
@@ -370,54 +332,27 @@ struct SettingsView: View {
                 store.save()
             } label: {
                 Text("Set day to \(debugDay) & reset pledge")
-                    .font(.system(size: 14, weight: .regular))
+                    .font(StackTypography.caption)
                     .foregroundStyle(StackTheme.secondaryText)
                     .frame(maxWidth: .infinity)
-                    .padding(.vertical, 12)
             }
-
-            StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+            .listRowBackground(StackTheme.surface1)
 
             Toggle(isOn: Binding(
                 get: { store.lifetimePurchased },
                 set: { store.lifetimePurchased = $0; store.save() }
             )) {
                 Text("Force paid (screenshots)")
-                    .font(.system(size: 16, weight: .regular))
+                    .font(StackTypography.callout)
                     .foregroundStyle(StackTheme.primaryText)
             }
-            .tint(Color(hex: "C8A96E"))
-            .padding(.horizontal, 28)
-            .padding(.vertical, 12)
-
-            StackTheme.separator.frame(height: 0.5).padding(.horizontal, 28)
+            .tint(StackTheme.ember)
+            .listRowBackground(StackTheme.surface1)
+        } header: {
+            overlineHeader("DEBUG (stripped from release)")
         }
     }
     #endif
-
-    private func sectionHeader(_ title: String) -> some View {
-        Text(title)
-            .font(StackTypography.overline)
-            .tracking(1.5)
-            .foregroundStyle(StackTheme.secondaryText)
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .padding(.horizontal, 28)
-            .padding(.top, 16)
-            .padding(.bottom, 8)
-    }
-
-    private func settingsRow<Trailing: View>(title: String, @ViewBuilder trailing: () -> Trailing) -> some View {
-        HStack {
-            Text(title)
-                .font(StackTypography.body)
-                .foregroundStyle(StackTheme.primaryText)
-            Spacer()
-            trailing()
-        }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
-        .contentShape(Rectangle())
-    }
 }
 
 struct WidgetInstructionsSheet: View {
@@ -454,10 +389,7 @@ struct WidgetInstructionsSheet: View {
         HStack(spacing: 16) {
             ZStack {
                 Circle()
-                    .fill(StackTheme.cardBackground)
-                    .frame(width: 36, height: 36)
-                Circle()
-                    .stroke(StackTheme.cardBorder, lineWidth: 1)
+                    .fill(StackTheme.surface2)
                     .frame(width: 36, height: 36)
                 Image(systemName: icon)
                     .font(.system(size: 14, weight: .regular))
