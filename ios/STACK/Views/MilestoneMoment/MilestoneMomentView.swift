@@ -14,7 +14,6 @@ struct MilestoneMomentView: View {
     @State private var headerVisible: Bool = false
     @State private var messageVisible: Bool = false
     @State private var footerVisible: Bool = false
-    @State private var loadingDotPhase: Bool = false
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     private var targetDay: Int {
@@ -62,7 +61,7 @@ struct MilestoneMomentView: View {
 
             VStack(spacing: 0) {
                 Text("CHAPTER \(chapterNumber) · \(headerLabel)")
-                    .font(StackTypography.overline)
+                    .font(.system(size: 11, weight: .regular))
                     .tracking(1.5)
                     .foregroundStyle(StackTheme.secondaryText)
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -79,8 +78,8 @@ struct MilestoneMomentView: View {
                 Spacer()
 
                 Text("Take your time.")
-                    .font(.system(size: 16, weight: .medium))
-                    .foregroundStyle(StackTheme.primaryText)
+                    .font(.system(size: 15, weight: .regular))
+                    .foregroundStyle(Color.white)
                     .padding(.bottom, 48)
                     .opacity(footerVisible ? 1.0 : 0.0)
             }
@@ -116,6 +115,9 @@ struct MilestoneMomentView: View {
         }
         .onChange(of: isLoading) { _, loading in
             if !loading {
+                if relayMessage != nil {
+                    UIImpactFeedbackGenerator(style: .light).impactOccurred()
+                }
                 // Message animates in when fetch completes
                 withAnimation(reduceMotion ? .none : StackAnimation.cardEntrance) {
                     messageVisible = true
@@ -166,73 +168,56 @@ struct MilestoneMomentView: View {
     }
 
     private var loadingView: some View {
-        HStack(spacing: 8) {
-            ForEach(0..<3, id: \.self) { i in
-                Circle()
-                    .fill(StackTheme.tertiaryText)
-                    .frame(width: 6, height: 6)
-                    .opacity(reduceMotion ? 1.0 : (loadingDotPhase ? 1.0 : 0.3))
-                    .animation(
-                        reduceMotion ? nil :
-                            .easeInOut(duration: 0.6)
-                                .repeatForever(autoreverses: true)
-                                .delay(Double(i) * 0.2),
-                        value: loadingDotPhase
-                    )
+        RelayCard {
+            VStack(alignment: .leading, spacing: 12) {
+                SkeletonView(height: 16)
+                SkeletonView(width: 220, height: 16)
+                SkeletonView(width: 160, height: 12)
             }
         }
-        .onAppear {
-            if !reduceMotion {
-                loadingDotPhase = true
-            }
-        }
+        .padding(.horizontal, 28)
     }
 
     private func paidMessageView(message: RelayMessage) -> some View {
         VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 0) {
-                if reportedMessage {
-                    Text("Reported. Thank you.")
-                        .font(.system(size: 15, weight: .regular))
-                        .foregroundStyle(StackTheme.tertiaryText)
-                } else {
-                    Text(message.text)
-                        .font(Font.custom("Georgia", size: 19))
-                        .foregroundStyle(StackTheme.primaryText)
-                        .lineSpacing(9)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-
-                    HStack {
-                        Text("— from \(milestoneWriterLabel)")
-                            .font(StackTypography.footnote)
+            RelayCard(padding: 24) {
+                VStack(alignment: .leading, spacing: 0) {
+                    if reportedMessage {
+                        Text("Reported. Thank you.")
+                            .font(.system(size: 15, weight: .regular))
                             .foregroundStyle(StackTheme.secondaryText)
+                    } else {
+                        Text(message.text)
+                            .font(Font.custom("Georgia", size: 19))
+                            .foregroundStyle(StackTheme.primaryText)
+                            .lineSpacing(9)
+                            .frame(maxWidth: .infinity, alignment: .leading)
 
-                        Spacer()
+                        HStack {
+                            Text("— from \(milestoneWriterLabel)")
+                                .font(StackTypography.footnote)
+                                .foregroundStyle(StackTheme.secondaryText)
 
-                        Button {
-                            showReportConfirmation = true
-                        } label: {
-                            Image(systemName: "flag")
-                                .font(.system(size: 12, weight: .regular))
-                                .foregroundStyle(StackTheme.tertiaryText)
+                            Spacer()
+
+                            Button {
+                                showReportConfirmation = true
+                            } label: {
+                                Image(systemName: "flag")
+                                    .font(.system(size: 12, weight: .regular))
+                                    .foregroundStyle(StackTheme.secondaryText)
+                            }
                         }
+                        .padding(.top, 12)
                     }
-                    .padding(.top, 12)
                 }
             }
-            .padding(24)
-            .background(StackTheme.cardBackground)
-            .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadius))
-            .overlay(
-                RoundedRectangle(cornerRadius: StackTheme.cardRadius)
-                    .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-            )
             .padding(.horizontal, 28)
 
             if !reportedMessage {
                 HStack(spacing: 4) {
                     Text("Write one for the next person")
-                        .font(.system(size: 13, weight: .medium))
+                        .font(.system(size: 13, weight: .regular))
                     Image(systemName: "chevron.right")
                         .font(.system(size: 11, weight: .regular))
                 }
@@ -255,19 +240,13 @@ struct MilestoneMomentView: View {
     }
 
     private var emptyPoolView: some View {
-        VStack(alignment: .leading, spacing: 0) {
+        RelayCard(padding: 24) {
             Text("You're the first to reach \(headerLabel) in STACK.\nWhen you write something, it'll be here for the next person.")
                 .font(Font.custom("Georgia", size: 19))
                 .foregroundStyle(StackTheme.primaryText)
                 .lineSpacing(9)
+                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(24)
-        .background(StackTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadius))
-        .overlay(
-            RoundedRectangle(cornerRadius: StackTheme.cardRadius)
-                .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-        )
         .padding(.horizontal, 28)
         .contentShape(Rectangle())
         .accessibilityLabel("Write a relay message")
@@ -276,42 +255,38 @@ struct MilestoneMomentView: View {
     }
 
     private var freetierView: some View {
-        VStack(alignment: .leading, spacing: 0) {
-            // Show truncated real message or fallback
-            Text(truncatedText)
-                .font(Font.custom("Georgia", size: 19))
-                .foregroundStyle(StackTheme.tertiaryText)
-                .lineSpacing(9)
-                .frame(maxWidth: .infinity, alignment: .leading)
+        VStack(spacing: 0) {
+            RelayCard(padding: 24) {
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(truncatedText)
+                        .font(Font.custom("Georgia", size: 19))
+                        .foregroundStyle(StackTheme.secondaryText)
+                        .lineSpacing(9)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-            Text("— from \(milestoneWriterLabel)")
-                .font(StackTypography.footnote)
-                .foregroundStyle(StackTheme.secondaryText)
-                .padding(.top, 12)
+                    Text("— from \(milestoneWriterLabel)")
+                        .font(StackTypography.footnote)
+                        .foregroundStyle(StackTheme.secondaryText)
+                        .padding(.top, 12)
+                }
+            }
+            .padding(.horizontal, 28)
 
-            // Unlock button
             Button {
                 showPaywall = true
             } label: {
-                Text("Unlock STACK")
+                Text("Unlock")
             }
-            .buttonStyle(GoldCTAButtonStyle())
+            .buttonStyle(PrimaryCTAButtonStyle())
+            .padding(.horizontal, 28)
             .padding(.top, 20)
 
             Text("One time. No subscription.")
                 .font(StackTypography.caption)
-                .foregroundStyle(StackTheme.tertiaryText)
+                .foregroundStyle(StackTheme.secondaryText)
                 .frame(maxWidth: .infinity, alignment: .center)
                 .padding(.top, 10)
         }
-        .padding(24)
-        .background(StackTheme.cardBackground)
-        .clipShape(RoundedRectangle(cornerRadius: StackTheme.cardRadius))
-        .overlay(
-            RoundedRectangle(cornerRadius: StackTheme.cardRadius)
-                .stroke(StackTheme.cardBorder, lineWidth: 1.0)
-        )
-        .padding(.horizontal, 28)
     }
 
     private var truncatedText: String {

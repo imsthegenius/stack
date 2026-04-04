@@ -43,7 +43,7 @@ struct PaywallView: View {
                 Spacer()
 
                 VStack(spacing: 0) {
-                    Text("The relay.")
+                    Text("Unlock the relay.")
                         .font(StackTypography.title)
                         .foregroundStyle(StackTheme.primaryText)
 
@@ -54,17 +54,20 @@ struct PaywallView: View {
                         .multilineTextAlignment(.center)
                         .padding(.top, 16)
 
-                    VStack(spacing: 16) {
-                        featureRow(icon: "envelope.open", text: "Read every relay message")
-                        featureRow(icon: "pencil.line", text: "Write messages forward")
-                        featureRow(icon: "infinity", text: "Unlimited, forever")
+                    VStack(alignment: .leading, spacing: 14) {
+                        Text("Read every relay message")
+                        Text("Write messages forward")
+                        Text("Unlimited, forever")
                     }
+                    .font(.system(size: 16, weight: .regular))
+                    .foregroundStyle(Color.white)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.top, 32)
 
                     if !priceString.isEmpty {
                         Text("\(priceString) · one time · forever")
-                            .font(.system(size: 15, weight: .medium))
-                            .foregroundStyle(StackTheme.gold)
+                            .font(.system(size: 15, weight: .regular))
+                            .foregroundStyle(Color(hex: "E87B58"))
                             .padding(.top, 24)
                     }
                 }
@@ -92,7 +95,7 @@ struct PaywallView: View {
                             }
                         }
                     }
-                    .buttonStyle(GoldCTAButtonStyle())
+                    .buttonStyle(PrimaryCTAButtonStyle())
                     .disabled(buttonDisabled && !loadFailed)
                     .opacity(buttonDisabled && !loadFailed ? 0.5 : 1.0)
 
@@ -128,7 +131,7 @@ struct PaywallView: View {
                         Link("Privacy Policy", destination: URL(string: "https://stack.twohundred.ai/privacy.html")!)
                             .underline()
                     }
-                    .font(StackTypography.caption)
+                    .font(.system(size: 12, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
                     .padding(.top, 16)
                 }
@@ -138,19 +141,6 @@ struct PaywallView: View {
         }
         .task {
             await loadOffering()
-        }
-    }
-
-    private func featureRow(icon: String, text: String) -> some View {
-        HStack(spacing: 14) {
-            Image(systemName: icon)
-                .font(.system(size: 16, weight: .regular))
-                .foregroundStyle(StackTheme.gold)
-                .frame(width: 24)
-            Text(text)
-                .font(StackTypography.body)
-                .foregroundStyle(StackTheme.primaryText)
-            Spacer()
         }
     }
 
