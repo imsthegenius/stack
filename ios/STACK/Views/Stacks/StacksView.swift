@@ -109,6 +109,7 @@ struct StacksView: View {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12, weight: .regular))
                     .foregroundStyle(StackTheme.secondaryText)
+                    .accessibilityHidden(true)
             }
             .padding(.horizontal, 24)
             .padding(.vertical, 16)
