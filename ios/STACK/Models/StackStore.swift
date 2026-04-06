@@ -193,6 +193,7 @@ class StackStore {
     // MARK: - Server Sync
 
     func syncToServer() {
+        guard !isLoadingServerData else { return }
         guard AuthService.shared.isSignedIn, let token = AuthService.shared.accessToken else { return }
         let chaptersSnapshot = chapters
         let relaySnapshot = receivedRelayDays
@@ -234,8 +235,8 @@ class StackStore {
                     writtenRelayDays = Array(Set(writtenRelayDays + serverWritten))
                 }
 
-                save()
                 isLoadingServerData = false
+                save()
             }
         }
     }
