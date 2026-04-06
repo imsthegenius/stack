@@ -63,7 +63,7 @@ struct RectangularWidgetView: View {
             .containerBackground(.clear, for: .widget)
         } else {
             Text("Open STACK to begin")
-                .font(.system(.caption, design: .default).weight(.regular))
+                .font(.system(.footnote, design: .default).weight(.regular))
                 .containerBackground(.clear, for: .widget)
         }
     }
@@ -79,8 +79,9 @@ struct CircularWidgetView: View {
                 .widgetAccentable()
                 .containerBackground(.clear, for: .widget)
         } else {
-            Image(systemName: "circle")
-                .font(.system(.title3, design: .default).weight(.light))
+            Text("—")
+                .font(.system(.title, design: .default).weight(.light))
+                .accessibilityLabel("Open STACK to begin")
                 .containerBackground(.clear, for: .widget)
         }
     }
@@ -131,7 +132,7 @@ struct SmallWidgetView: View {
                     .font(.system(size: 24, weight: .light))
                     .foregroundStyle(Color(red: 0.29, green: 0.28, blue: 0.27))
                 Text("Open STACK\nto begin")
-                    .font(.system(.caption2, design: .default).weight(.regular))
+                    .font(.system(.footnote, design: .default).weight(.regular))
                     .foregroundStyle(Color(red: 0.55, green: 0.53, blue: 0.50))
                     .multilineTextAlignment(.center)
             }
