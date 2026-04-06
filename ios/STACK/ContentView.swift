@@ -20,9 +20,6 @@ struct ContentView: View {
                 OnboardingContainerView(store: store)
             } else if requiresSignIn {
                 SignInView(store: store)
-            } else if store.chapters.isEmpty {
-                // Signed in but no data (e.g. wrong Apple ID, new account) — redirect to setup
-                OnboardingContainerView(store: store)
             } else {
                 mainTabView
             }
