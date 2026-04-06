@@ -207,6 +207,7 @@ struct MilestoneMomentView: View {
                                     .font(.system(size: 12, weight: .regular))
                                     .foregroundStyle(StackTheme.secondaryText)
                             }
+                            .accessibilityLabel("Report message")
                         }
                         .padding(.top, 12)
                     }

@@ -34,8 +34,6 @@ enum StackTheme {
     // Backward compat — gold maps to ember for existing views
     // View tickets (TWO-347..354) will replace these references
     static let gold = ember
-    static let tertiaryText = secondaryText
-
     // Legacy card colors — mapped to new surface tiers
     static let cardBackground = surface2
     static let cardBorder = Color(hex: "3A3836")

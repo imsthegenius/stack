@@ -50,6 +50,8 @@ struct TodayView: View {
                             .padding(.top, 16)
                             .contentShape(Rectangle())
                     }
+                    .accessibilityLabel("Chapter \(chapter.chapterNumber)")
+                    .accessibilityHint("Opens Journey")
                 }
 
                 Spacer()
@@ -59,9 +61,9 @@ struct TodayView: View {
                 if pledgedToday && stackedTextVisible {
                     HStack(spacing: 6) {
                         Image(systemName: "checkmark")
-                            .font(.system(size: 13, weight: .medium))
+                            .font(.system(size: 13, weight: .regular))
                         Text("Stacked.")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(StackTypography.footnote)
                     }
                     .foregroundStyle(StackTheme.primaryText)
                     .padding(.top, 20)
@@ -71,7 +73,7 @@ struct TodayView: View {
                 if pledgedToday && relayLoading {
                     Text("Loading relay message...")
                         .font(StackTypography.caption)
-                        .foregroundStyle(StackTheme.tertiaryText)
+                        .foregroundStyle(StackTheme.secondaryText)
                         .padding(.top, 12)
                         .transition(.opacity)
                 }
@@ -81,7 +83,7 @@ struct TodayView: View {
                     if inlineRelayReported {
                         Text("Reported. Thank you.")
                             .font(.system(size: 13, weight: .regular))
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .foregroundStyle(StackTheme.secondaryText)
                             .padding(.top, 24)
                             .transition(.opacity)
                     } else {
@@ -94,7 +96,7 @@ struct TodayView: View {
 
                                 Text("— from \(writerLabel(for: message))")
                                     .font(StackTypography.caption)
-                                    .foregroundStyle(StackTheme.tertiaryText)
+                                    .foregroundStyle(StackTheme.secondaryText)
                             }
                         }
                         .padding(.horizontal, 28)
@@ -143,18 +145,18 @@ struct TodayView: View {
                 if pledgedToday && !store.isRelayDay, let daysLeft = store.daysUntilNextRelay, daysLeft <= 7 {
                     Text("\(daysLeft) day\(daysLeft == 1 ? "" : "s") until next relay")
                         .font(StackTypography.caption)
-                        .foregroundStyle(StackTheme.tertiaryText)
+                        .foregroundStyle(StackTheme.secondaryText)
                         .padding(.top, 12)
                 }
 
                 if store.chapters.count > 1 {
                     HStack(spacing: 4) {
                         Text("\(store.totalDays)")
-                            .font(.system(size: 15, weight: .medium))
+                            .font(StackTypography.footnote)
                             .foregroundStyle(StackTheme.secondaryText)
                         Text("days total across \(store.chapters.count) chapters")
                             .font(StackTypography.caption)
-                            .foregroundStyle(StackTheme.tertiaryText)
+                            .foregroundStyle(StackTheme.secondaryText)
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 10)
