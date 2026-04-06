@@ -232,22 +232,31 @@ struct TodayView: View {
         VStack(spacing: 20) {
             Spacer()
 
-            Text("Set up your counter")
-                .font(StackTypography.title)
-                .foregroundStyle(StackTheme.primaryText)
+            if store.isLoadingServerData {
+                ProgressView()
+                    .tint(StackTheme.secondaryText)
+                Text("Loading your data...")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.secondaryText)
+            } else {
+                Text("Set up your counter")
+                    .font(StackTypography.title)
+                    .foregroundStyle(StackTheme.primaryText)
 
-            Text("Your account has no chapter data yet.")
-                .font(StackTypography.callout)
-                .foregroundStyle(StackTheme.secondaryText)
+                Text("Your account has no chapter data yet.")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.secondaryText)
 
-            Button {
-                store.hasCompletedOnboarding = false
-                store.save()
-            } label: {
-                Text("Start setup")
+                Button {
+                    // Only toggle the flag — don't call save() to avoid
+                    // syncing empty chapters to the server
+                    store.hasCompletedOnboarding = false
+                } label: {
+                    Text("Start setup")
+                }
+                .buttonStyle(PrimaryCTAButtonStyle())
+                .padding(.horizontal, StackSpacing.horizontalPadding)
             }
-            .buttonStyle(PrimaryCTAButtonStyle())
-            .padding(.horizontal, StackSpacing.horizontalPadding)
 
             Spacer()
         }

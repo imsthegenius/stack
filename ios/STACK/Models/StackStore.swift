@@ -10,6 +10,7 @@ class StackStore {
     var receivedRelayDays: [Int] = []
     var writtenRelayDays: [Int] = []
     var blockedRelayMessageIDs: [String] = []
+    var isLoadingServerData: Bool = false
 
     // Backward compat — kept for migration only
     var receivedRelayMilestoneDays: [Int] {
@@ -208,8 +209,12 @@ class StackStore {
 
     func loadFromServer() {
         guard AuthService.shared.isSignedIn, let token = AuthService.shared.accessToken else { return }
+        isLoadingServerData = true
         Task {
-            guard let serverData = await SupabaseService.shared.fetchUserData(authToken: token) else { return }
+            guard let serverData = await SupabaseService.shared.fetchUserData(authToken: token) else {
+                await MainActor.run { isLoadingServerData = false }
+                return
+            }
 
             await MainActor.run {
                 // Merge chapters: use whichever has more total days
@@ -230,6 +235,7 @@ class StackStore {
                 }
 
                 save()
+                isLoadingServerData = false
             }
         }
     }
