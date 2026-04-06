@@ -85,7 +85,7 @@ class StackStore {
             chapters[index] = current
         }
         let newChapter = Chapter(
-            startDate: today,
+            startDate: Calendar.current.date(byAdding: .day, value: -1, to: today)!,
             chapterNumber: current.chapterNumber + 1
         )
         chapters.append(newChapter)
@@ -289,6 +289,7 @@ class StackStore {
     }
 
     func syncWidgetData() {
+        defaults.set(!chapters.isEmpty, forKey: "widget_has_data")
         defaults.set(currentDays, forKey: "widget_current_days")
         defaults.set(currentChapter?.chapterNumber ?? 1, forKey: "widget_chapter_number")
         defaults.set(totalDays, forKey: "widget_total_days")
