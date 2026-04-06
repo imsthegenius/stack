@@ -23,6 +23,7 @@ class StackStore {
     init() {
         defaults = UserDefaults(suiteName: "group.com.twohundred.stack") ?? .standard
         load()
+        syncWidgetData()
         observeCloudChanges()
     }
 
