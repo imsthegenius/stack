@@ -57,7 +57,7 @@ struct RectangularWidgetView: View {
                     .widgetAccentable()
                 if entry.isMilestoneDay, !entry.milestoneLabel.isEmpty {
                     Text(entry.milestoneLabel)
-                        .font(.system(.caption, design: .default).weight(.regular))
+                        .font(.system(.footnote, design: .default).weight(.regular))
                 }
             }
             .containerBackground(.clear, for: .widget)
@@ -108,7 +108,7 @@ struct SmallWidgetView: View {
         if entry.hasData {
             VStack(alignment: .leading, spacing: 4) {
                 Text("CHAPTER \(entry.chapterNumber)")
-                    .font(.system(.caption2, design: .default).weight(.regular))
+                    .font(.system(.footnote, design: .default).weight(.regular))
                     .foregroundStyle(Color(red: 0.29, green: 0.28, blue: 0.27))
                     .tracking(1.5)
                 Spacer()
@@ -116,12 +116,12 @@ struct SmallWidgetView: View {
                     .font(.system(size: 38, weight: .light, design: .default))
                     .foregroundStyle(entry.isMilestoneDay ? Color.white : Color(red: 0.96, green: 0.95, blue: 0.93))
                 Text(entry.currentDays == 1 ? "DAY" : "DAYS")
-                    .font(.system(.caption, design: .default).weight(.regular))
+                    .font(.system(.footnote, design: .default).weight(.regular))
                     .foregroundStyle(Color(red: 0.55, green: 0.53, blue: 0.50))
                     .tracking(2)
                 Spacer()
                 Image(systemName: entry.pledgedToday ? "checkmark" : "circle")
-                    .font(.system(size: 12, weight: .regular))
+                    .font(.system(size: 13, weight: .regular))
                     .foregroundStyle(entry.pledgedToday ? Color(red: 0.96, green: 0.95, blue: 0.93) : Color(red: 0.29, green: 0.28, blue: 0.27))
             }
             .padding(16)
