@@ -238,7 +238,7 @@ struct TodayView: View {
                 Text("Loading your data...")
                     .font(StackTypography.callout)
                     .foregroundStyle(StackTheme.secondaryText)
-            } else {
+            } else if store.serverConfirmedEmpty || !AuthService.shared.isSignedIn {
                 Text("Set up your counter")
                     .font(StackTypography.title)
                     .foregroundStyle(StackTheme.primaryText)
@@ -248,11 +248,21 @@ struct TodayView: View {
                     .foregroundStyle(StackTheme.secondaryText)
 
                 Button {
-                    // Only toggle the flag — don't call save() to avoid
-                    // syncing empty chapters to the server
                     store.hasCompletedOnboarding = false
                 } label: {
                     Text("Start setup")
+                }
+                .buttonStyle(PrimaryCTAButtonStyle())
+                .padding(.horizontal, StackSpacing.horizontalPadding)
+            } else {
+                Text("Could not reach the server.")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.secondaryText)
+
+                Button {
+                    store.loadFromServer()
+                } label: {
+                    Text("Retry")
                 }
                 .buttonStyle(PrimaryCTAButtonStyle())
                 .padding(.horizontal, StackSpacing.horizontalPadding)

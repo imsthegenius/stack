@@ -2,6 +2,11 @@ import Foundation
 
 class SupabaseService {
     static let shared = SupabaseService()
+
+    /// True when the last fetchUserData call got a 2xx response (even if empty).
+    /// False after a network/decode error. Lets callers distinguish "no data" from "unreachable".
+    var lastFetchReachedServer: Bool = false
+
     private init() {}
 
     static let supabaseURL = "https://wfckqpnxnzzwbgbthtsb.supabase.co"
@@ -165,12 +170,17 @@ class SupabaseService {
 
         do {
             let (data, response) = try await session.data(for: request)
-            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else { return nil }
+            guard let http = response as? HTTPURLResponse, (200...299).contains(http.statusCode) else {
+                lastFetchReachedServer = false
+                return nil
+            }
 
+            lastFetchReachedServer = true
             let decoder = makeDecoder()
             let results = try decoder.decode([UserDataResponse].self, from: data)
             return results.first
         } catch {
+            lastFetchReachedServer = false
             return nil
         }
     }

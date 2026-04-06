@@ -11,6 +11,7 @@ class StackStore {
     var writtenRelayDays: [Int] = []
     var blockedRelayMessageIDs: [String] = []
     var isLoadingServerData: Bool = false
+    var serverConfirmedEmpty: Bool = false
 
     // Backward compat — kept for migration only
     var receivedRelayMilestoneDays: [Int] {
@@ -212,14 +213,14 @@ class StackStore {
         guard AuthService.shared.isSignedIn, let token = AuthService.shared.accessToken else { return }
         isLoadingServerData = true
         Task {
-            // Try fetch, retry once on nil to handle transient errors
-            var serverData = await SupabaseService.shared.fetchUserData(authToken: token)
-            if serverData == nil {
-                try? await Task.sleep(nanoseconds: 2_000_000_000)
-                serverData = await SupabaseService.shared.fetchUserData(authToken: token)
-            }
+            let serverData = await SupabaseService.shared.fetchUserData(authToken: token)
+            let reachedServer = SupabaseService.shared.lastFetchReachedServer
             guard let serverData else {
-                await MainActor.run { isLoadingServerData = false }
+                await MainActor.run {
+                    // Only mark empty if the server actually responded (not a network error)
+                    if reachedServer { serverConfirmedEmpty = true }
+                    isLoadingServerData = false
+                }
                 return
             }
 
