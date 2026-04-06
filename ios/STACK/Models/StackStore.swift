@@ -10,6 +10,8 @@ class StackStore {
     var receivedRelayDays: [Int] = []
     var writtenRelayDays: [Int] = []
     var blockedRelayMessageIDs: [String] = []
+    var isLoadingServerData: Bool = false
+    var serverConfirmedEmpty: Bool = false
 
     // Backward compat — kept for migration only
     var receivedRelayMilestoneDays: [Int] {
@@ -23,6 +25,7 @@ class StackStore {
     init() {
         defaults = UserDefaults(suiteName: "group.com.twohundred.stack") ?? .standard
         load()
+        syncWidgetData()
         observeCloudChanges()
     }
 
@@ -85,7 +88,7 @@ class StackStore {
             chapters[index] = current
         }
         let newChapter = Chapter(
-            startDate: today,
+            startDate: Calendar.current.date(byAdding: .day, value: -1, to: today)!,
             chapterNumber: current.chapterNumber + 1
         )
         chapters.append(newChapter)
@@ -191,6 +194,7 @@ class StackStore {
     // MARK: - Server Sync
 
     func syncToServer() {
+        guard !isLoadingServerData else { return }
         guard AuthService.shared.isSignedIn, let token = AuthService.shared.accessToken else { return }
         let chaptersSnapshot = chapters
         let relaySnapshot = receivedRelayDays
@@ -207,8 +211,19 @@ class StackStore {
 
     func loadFromServer() {
         guard AuthService.shared.isSignedIn, let token = AuthService.shared.accessToken else { return }
+        isLoadingServerData = true
+        serverConfirmedEmpty = false
         Task {
-            guard let serverData = await SupabaseService.shared.fetchUserData(authToken: token) else { return }
+            let serverData = await SupabaseService.shared.fetchUserData(authToken: token)
+            let reachedServer = SupabaseService.shared.lastFetchReachedServer
+            guard let serverData else {
+                await MainActor.run {
+                    // Only mark empty if the server actually responded (not a network error)
+                    if reachedServer { serverConfirmedEmpty = true }
+                    isLoadingServerData = false
+                }
+                return
+            }
 
             await MainActor.run {
                 // Merge chapters: use whichever has more total days
@@ -228,6 +243,7 @@ class StackStore {
                     writtenRelayDays = Array(Set(writtenRelayDays + serverWritten))
                 }
 
+                isLoadingServerData = false
                 save()
             }
         }
@@ -289,6 +305,7 @@ class StackStore {
     }
 
     func syncWidgetData() {
+        defaults.set(!chapters.isEmpty, forKey: "widget_has_data")
         defaults.set(currentDays, forKey: "widget_current_days")
         defaults.set(currentChapter?.chapterNumber ?? 1, forKey: "widget_chapter_number")
         defaults.set(totalDays, forKey: "widget_total_days")

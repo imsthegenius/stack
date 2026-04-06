@@ -27,6 +27,10 @@ struct TodayView: View {
         ZStack {
             StackTheme.background.ignoresSafeArea()
 
+            if store.currentChapter == nil {
+                emptyStateView
+            } else {
+
             VStack(spacing: 0) {
                 if let chapter = store.currentChapter {
                     Button {
@@ -163,6 +167,8 @@ struct TodayView: View {
                 Spacer()
                 Spacer().frame(height: 48)
             }
+
+            } // else (has current chapter)
         }
         .onAppear {
             pledgedToday = store.hasPledgedToday
@@ -219,6 +225,50 @@ struct TodayView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("This message will be flagged for review and hidden from your view.")
+        }
+    }
+
+    private var emptyStateView: some View {
+        VStack(spacing: 20) {
+            Spacer()
+
+            if store.isLoadingServerData {
+                ProgressView()
+                    .tint(StackTheme.secondaryText)
+                Text("Loading your data...")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.secondaryText)
+            } else if store.serverConfirmedEmpty || !AuthService.shared.isSignedIn {
+                Text("Set up your counter")
+                    .font(StackTypography.title)
+                    .foregroundStyle(StackTheme.primaryText)
+
+                Text("Your account has no chapter data yet.")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.secondaryText)
+
+                Button {
+                    store.hasCompletedOnboarding = false
+                } label: {
+                    Text("Start setup")
+                }
+                .buttonStyle(PrimaryCTAButtonStyle())
+                .padding(.horizontal, StackSpacing.horizontalPadding)
+            } else {
+                Text("Could not reach the server.")
+                    .font(StackTypography.callout)
+                    .foregroundStyle(StackTheme.secondaryText)
+
+                Button {
+                    store.loadFromServer()
+                } label: {
+                    Text("Retry")
+                }
+                .buttonStyle(PrimaryCTAButtonStyle())
+                .padding(.horizontal, StackSpacing.horizontalPadding)
+            }
+
+            Spacer()
         }
     }
 

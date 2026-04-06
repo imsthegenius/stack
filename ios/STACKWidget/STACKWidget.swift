@@ -3,6 +3,7 @@ import SwiftUI
 
 nonisolated struct StackWidgetEntry: TimelineEntry {
     let date: Date
+    let hasData: Bool
     let currentDays: Int
     let chapterNumber: Int
     let totalDays: Int
@@ -13,7 +14,7 @@ nonisolated struct StackWidgetEntry: TimelineEntry {
 
 nonisolated struct StackWidgetProvider: TimelineProvider {
     func placeholder(in context: Context) -> StackWidgetEntry {
-        StackWidgetEntry(date: .now, currentDays: 0, chapterNumber: 1, totalDays: 0, isMilestoneDay: false, milestoneLabel: "", pledgedToday: false)
+        StackWidgetEntry(date: .now, hasData: false, currentDays: 0, chapterNumber: 1, totalDays: 0, isMilestoneDay: false, milestoneLabel: "", pledgedToday: false)
     }
 
     func getSnapshot(in context: Context, completion: @escaping (StackWidgetEntry) -> Void) {
@@ -31,6 +32,7 @@ nonisolated struct StackWidgetProvider: TimelineProvider {
         let defaults = UserDefaults(suiteName: "group.com.twohundred.stack")
         return StackWidgetEntry(
             date: .now,
+            hasData: defaults?.bool(forKey: "widget_has_data") ?? false,
             currentDays: defaults?.integer(forKey: "widget_current_days") ?? 0,
             chapterNumber: defaults?.integer(forKey: "widget_chapter_number") ?? 1,
             totalDays: defaults?.integer(forKey: "widget_total_days") ?? 0,
@@ -48,16 +50,22 @@ struct RectangularWidgetView: View {
     var entry: StackWidgetEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            Text("\(entry.currentDays) \(entry.currentDays == 1 ? "DAY" : "DAYS")")
-                .font(.system(.headline, design: .default).weight(.light))
-                .widgetAccentable()
-            if entry.isMilestoneDay, !entry.milestoneLabel.isEmpty {
-                Text(entry.milestoneLabel)
-                    .font(.system(.caption, design: .default).weight(.regular))
+        if entry.hasData {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("\(entry.currentDays) \(entry.currentDays == 1 ? "DAY" : "DAYS")")
+                    .font(.system(.headline, design: .default).weight(.light))
+                    .widgetAccentable()
+                if entry.isMilestoneDay, !entry.milestoneLabel.isEmpty {
+                    Text(entry.milestoneLabel)
+                        .font(.system(.footnote, design: .default).weight(.regular))
+                }
             }
+            .containerBackground(.clear, for: .widget)
+        } else {
+            Text("Open STACK to begin")
+                .font(.system(.footnote, design: .default).weight(.regular))
+                .containerBackground(.clear, for: .widget)
         }
-        .containerBackground(.clear, for: .widget)
     }
 }
 
@@ -65,10 +73,17 @@ struct CircularWidgetView: View {
     var entry: StackWidgetEntry
 
     var body: some View {
-        Text("\(entry.currentDays)")
-            .font(.system(.title, design: .default).weight(.light))
-            .widgetAccentable()
-            .containerBackground(.clear, for: .widget)
+        if entry.hasData {
+            Text("\(entry.currentDays)")
+                .font(.system(.title, design: .default).weight(.light))
+                .widgetAccentable()
+                .containerBackground(.clear, for: .widget)
+        } else {
+            Text("—")
+                .font(.system(.title, design: .default).weight(.light))
+                .accessibilityLabel("Open STACK to begin")
+                .containerBackground(.clear, for: .widget)
+        }
     }
 }
 
@@ -76,8 +91,13 @@ struct InlineWidgetView: View {
     var entry: StackWidgetEntry
 
     var body: some View {
-        Text(entry.pledgedToday ? "\(entry.currentDays) \(entry.currentDays == 1 ? "day" : "days"). Stacked." : "\(entry.currentDays) \(entry.currentDays == 1 ? "day" : "days").")
-            .containerBackground(.clear, for: .widget)
+        if entry.hasData {
+            Text(entry.pledgedToday ? "\(entry.currentDays) \(entry.currentDays == 1 ? "day" : "days"). Stacked." : "\(entry.currentDays) \(entry.currentDays == 1 ? "day" : "days").")
+                .containerBackground(.clear, for: .widget)
+        } else {
+            Text("STACK — open to begin")
+                .containerBackground(.clear, for: .widget)
+        }
     }
 }
 
@@ -85,26 +105,41 @@ struct SmallWidgetView: View {
     var entry: StackWidgetEntry
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text("CHAPTER \(entry.chapterNumber)")
-                .font(.system(.caption2, design: .default).weight(.regular))
-                .foregroundStyle(Color(red: 0.29, green: 0.28, blue: 0.27))
-                .tracking(1.5)
-            Spacer()
-            Text("\(entry.currentDays)")
-                .font(.system(size: 38, weight: .light, design: .default))
-                .foregroundStyle(entry.isMilestoneDay ? Color.white : Color(red: 0.96, green: 0.95, blue: 0.93))
-            Text(entry.currentDays == 1 ? "DAY" : "DAYS")
-                .font(.system(.caption, design: .default).weight(.regular))
-                .foregroundStyle(Color(red: 0.55, green: 0.53, blue: 0.50))
-                .tracking(2)
-            Spacer()
-            Image(systemName: entry.pledgedToday ? "checkmark" : "circle")
-                .font(.system(size: 12, weight: .regular))
-                .foregroundStyle(entry.pledgedToday ? Color(red: 0.96, green: 0.95, blue: 0.93) : Color(red: 0.29, green: 0.28, blue: 0.27))
+        if entry.hasData {
+            VStack(alignment: .leading, spacing: 4) {
+                Text("CHAPTER \(entry.chapterNumber)")
+                    .font(.system(.footnote, design: .default).weight(.regular))
+                    .foregroundStyle(Color(red: 0.29, green: 0.28, blue: 0.27))
+                    .tracking(1.5)
+                Spacer()
+                Text("\(entry.currentDays)")
+                    .font(.system(size: 38, weight: .light, design: .default))
+                    .foregroundStyle(entry.isMilestoneDay ? Color.white : Color(red: 0.96, green: 0.95, blue: 0.93))
+                Text(entry.currentDays == 1 ? "DAY" : "DAYS")
+                    .font(.system(.footnote, design: .default).weight(.regular))
+                    .foregroundStyle(Color(red: 0.55, green: 0.53, blue: 0.50))
+                    .tracking(2)
+                Spacer()
+                Image(systemName: entry.pledgedToday ? "checkmark" : "circle")
+                    .font(.system(size: 13, weight: .regular))
+                    .foregroundStyle(entry.pledgedToday ? Color(red: 0.96, green: 0.95, blue: 0.93) : Color(red: 0.29, green: 0.28, blue: 0.27))
+            }
+            .padding(16)
+            .containerBackground(.clear, for: .widget)
+        } else {
+            VStack(spacing: 8) {
+                Image(systemName: "circle")
+                    .font(.system(size: 24, weight: .light))
+                    .foregroundStyle(Color(red: 0.29, green: 0.28, blue: 0.27))
+                Text("Open STACK\nto begin")
+                    .font(.system(.footnote, design: .default).weight(.regular))
+                    .foregroundStyle(Color(red: 0.55, green: 0.53, blue: 0.50))
+                    .multilineTextAlignment(.center)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .padding(16)
+            .containerBackground(.clear, for: .widget)
         }
-        .padding(16)
-        .containerBackground(.clear, for: .widget)
     }
 }
 
