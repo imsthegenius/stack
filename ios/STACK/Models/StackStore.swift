@@ -212,6 +212,7 @@ class StackStore {
     func loadFromServer() {
         guard AuthService.shared.isSignedIn, let token = AuthService.shared.accessToken else { return }
         isLoadingServerData = true
+        serverConfirmedEmpty = false
         Task {
             let serverData = await SupabaseService.shared.fetchUserData(authToken: token)
             let reachedServer = SupabaseService.shared.lastFetchReachedServer
