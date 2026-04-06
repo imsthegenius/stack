@@ -212,7 +212,13 @@ class StackStore {
         guard AuthService.shared.isSignedIn, let token = AuthService.shared.accessToken else { return }
         isLoadingServerData = true
         Task {
-            guard let serverData = await SupabaseService.shared.fetchUserData(authToken: token) else {
+            // Try fetch, retry once on nil to handle transient errors
+            var serverData = await SupabaseService.shared.fetchUserData(authToken: token)
+            if serverData == nil {
+                try? await Task.sleep(nanoseconds: 2_000_000_000)
+                serverData = await SupabaseService.shared.fetchUserData(authToken: token)
+            }
+            guard let serverData else {
                 await MainActor.run { isLoadingServerData = false }
                 return
             }
